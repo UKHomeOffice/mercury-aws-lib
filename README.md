@@ -13,6 +13,8 @@ Application built with the following (main) technologies:
 
 - AWS SQS / ElasticMQ
 
+- AWS S3
+
 Application
 -----------
 The application is configured as per a typical Scala application, where the default configuration file is "application.conf" (or reference.conf).
@@ -31,37 +33,37 @@ where this overrides the default in application.conf.
 Build and Deploy
 ----------------
 The project is built with SBT. On a Mac (sorry everyone else) do:
-```bash
+```
 brew install sbt
 ```
 
 It is also a good idea to install Typesafe Activator (which sits on top of SBT) for when you need to create new projects - it also has some SBT extras, so running an application with Activator instead of SBT can be useful. On Mac do:
-```bash
+```
 brew install typesafe-activator
 ```
 
 To compile:
-```bash
+```
 sbt compile
 ```
 
 or
-```bash
+```
 activator compile
 ```
 
 To run the specs:
-```bash
+```
 sbt test
 ```
 
 To actually run the application, you can simply:
-```bash
+```
 sbt run
 ```
 
 or first "assemble" it:
-```bash
+```
 sbt assembly
 ```
 
@@ -70,17 +72,17 @@ This packages up an executable JAR - Note that "assembly" will first compile and
 Then just run as any executable JAR, with any extra Java options for overriding configurations.
 
 For example, to use a config file (other than the default application.conf) which is located on the file system (in this case in the boot directory)
-```bash
+```
 java -Dconfig.file=test-classes/my-application.conf -jar <jar name>.jar
 ```
 
 Note that the log configuration file could also be included e.g.
-```bash
+```
 -Dlogback.configurationFile=path/to/my-logback.xml
 ```
 
 So a more indepth startup with sbt itself could be:
-```bash
+```
 sbt test:run -Dconfig.file=target/scala-2.11/test-classes/application.test.conf -Dlogback.configurationFile=target/scala-2.11/test-classes/logback.test.xml
 ```
 
@@ -89,7 +91,7 @@ Note the use of test:run. Usually we would only use "run", but as this is a libr
 And another example:
 
 running from directory of the executable JAR using a config that is within said JAR:
-```bash
+```
 java -Dconfig.resource=application.uat.conf -jar <jar name>.jar
 ```
 
@@ -124,26 +126,17 @@ java -jar bin/elasticmq-server-0.12.1.jar
 which starts up a working server that binds to localhost:9324
 
 or with a custom configuration that could create queues:
-```bash
+```
 java -Dconfig.file=src/test/resources/application.test.conf -jar bin/elasticmq-server-0.12.1.jar
 ```
    
 2) Boot this application:
-```bash
+```
 sbt test:run
 ```
    
 where the example application can be found under the "test" directory and is also show here:
 ```scala
-import java.net.URL
-import akka.actor.{ActorSystem, Props}
-import com.amazonaws.auth.BasicAWSCredentials
-import org.json4s.JsonDSL._
-import org.json4s.jackson.JsonMethods._
-import uk.gov.homeoffice.aws.sqs._
-import uk.gov.homeoffice.aws.sqs.subscription._
-import uk.gov.homeoffice.system.Exit
-
 object ExampleBoot extends App {
   val system = ActorSystem("amazon-sqs-actor-system")
 
