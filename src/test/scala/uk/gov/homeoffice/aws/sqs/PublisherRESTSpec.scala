@@ -11,7 +11,7 @@ import uk.gov.homeoffice.aws.sqs.subscription.Subscriber
 
 class PublisherRESTSpec(implicit ev: ExecutionEnv) extends Specification with ActorSystemSpecification {
   "Restful client" should {
-    "post some text" in new ActorSystemContext with EmbeddedSQSServer with REST {
+    "post some text" in new ActorSystemContext with SQSServerEmbedded with REST {
       val queue = create(new Queue("test-queue"))
 
       val result = wsClient.url(s"$sqsHost/queue/${queue.queueName}")
@@ -33,7 +33,7 @@ class PublisherRESTSpec(implicit ev: ExecutionEnv) extends Specification with Ac
       }.await
     }
 
-    "post some JSON" in new ActorSystemContext with EmbeddedSQSServer with REST {
+    "post some JSON" in new ActorSystemContext with SQSServerEmbedded with REST {
       val json =
         ("key1" -> "value1") ~
         ("key2" -> "value2")

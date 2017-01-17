@@ -18,7 +18,7 @@ import uk.gov.homeoffice.concurrent.PromiseOps
 import uk.gov.homeoffice.json.JsonFormats
 
 class SubscriberActorSpec(implicit ev: ExecutionEnv) extends Specification with ActorSystemSpecification with JsonFormats with PromiseOps with NoLanguageFeatures {
-  trait Context extends ActorSystemContext with ActorExpectations with EmbeddedSQSServer {
+  trait Context extends ActorSystemContext with ActorExpectations with SQSServerEmbedded {
     implicit val listeners = Seq(testActor)
 
     val queue = create(new Queue("test-queue"))

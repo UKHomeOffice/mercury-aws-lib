@@ -19,7 +19,7 @@ import uk.gov.homeoffice.concurrent.PromiseOps
 import uk.gov.homeoffice.json._
 
 class JsonSubscriberActorSpec(implicit ev: ExecutionEnv) extends Specification with ActorSystemSpecification with JsonFormats with PromiseOps {
-  trait Context extends ActorSystemContext with EmbeddedSQSServer {
+  trait Context extends ActorSystemContext with SQSServerEmbedded {
     val queue = create(new Queue("test-queue"))
 
     trait MyJsonSubscription extends JsonSubscription {
