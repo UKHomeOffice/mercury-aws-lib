@@ -1,6 +1,7 @@
 package uk.gov.homeoffice.aws.s3
 
 import java.io.File
+import scala.util.Success
 import org.specs2.mutable.Specification
 
 class PublisherSpec extends Specification {
@@ -8,14 +9,28 @@ class PublisherSpec extends Specification {
     "publish a file" in new S3ServerEmbedded {
       val bucket = "test-bucket"
 
+      val file = new File(s"$s3Directory/test-file.txt")
+
       val publisher = new Publisher(bucket)
-      println(publisher.publish("test-file.txt", new File(s"$s3Directory/test-file.txt")))
+      publisher.publish(file.getName, file) mustEqual Success(file.getName)
+
+      // TODO subscribe
+    }
+
+    "publish a files to same bucket" in new S3ServerEmbedded {
+      val bucket = "test-bucket"
+
+      // First file to publish
+      val file = new File(s"$s3Directory/test-file.txt")
+
+      val publisher = new Publisher(bucket)
+      publisher.publish(file.getName, file) mustEqual Success(file.getName)
+
+      // Second file to publish
+      val file2 = new File(s"$s3Directory/test-file-2.txt")
 
       val publisher2 = new Publisher(bucket)
-      println(publisher2.publish("test-file-2.txt", new File(s"$s3Directory/test-file-2.txt")))
-
-
-      ok
+      publisher2.publish(file2.getName, file2) mustEqual Success(file2.getName)
     }
   }
 }
