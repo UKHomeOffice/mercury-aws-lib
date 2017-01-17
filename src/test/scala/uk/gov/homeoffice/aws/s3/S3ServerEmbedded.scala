@@ -14,7 +14,9 @@ trait S3ServerEmbedded extends S3Server with Scope with ComposableAround with Lo
   val s3Port = getFreeServerPort
   val s3Host = new URL(s"http://0.0.0.0:$s3Port")
 
-  val server = S3Mock(s3Port, "src/test/resources/s3")
+  val s3Directory = "src/test/resources/s3"
+
+  val server = S3Mock(s3Port, s3Directory)
   server start
 
   implicit val s3Client = new S3Client(s3Host, new AnonymousAWSCredentials())

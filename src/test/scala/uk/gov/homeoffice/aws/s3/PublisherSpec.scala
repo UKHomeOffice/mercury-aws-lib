@@ -9,7 +9,11 @@ class PublisherSpec extends Specification {
       val bucket = "test-bucket"
 
       val publisher = new Publisher(bucket)
-      publisher.publish("key", new File("aws/tmp/s3/test-file.txt"))
+      println(publisher.publish("test-file.txt", new File(s"$s3Directory/test-file.txt")))
+
+      val publisher2 = new Publisher(bucket)
+      println(publisher2.publish("test-file-2.txt", new File(s"$s3Directory/test-file-2.txt")))
+
 
       ok
     }
