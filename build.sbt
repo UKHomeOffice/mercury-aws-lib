@@ -38,7 +38,8 @@ libraryDependencies ++= Seq(
   "org.elasticmq" %% "elasticmq-core" % `elasticmq-version` withSources(),
   "org.elasticmq" %% "elasticmq-rest-sqs" % `elasticmq-version` withSources(),
   "com.github.UKHomeOffice" %% "akka-scala-lib" % `akka-scala-lib-version` withSources(),
-  "com.github.UKHomeOffice" %% "io-scala-lib" % `io-scala-lib-version` withSources()
+  "com.github.UKHomeOffice" %% "io-scala-lib" % `io-scala-lib-version` withSources(),
+  "com.github.UKHomeOffice" %% "test-scala-lib" % `test-scala-lib-version` withSources()
 )
 
 libraryDependencies ++= Seq(

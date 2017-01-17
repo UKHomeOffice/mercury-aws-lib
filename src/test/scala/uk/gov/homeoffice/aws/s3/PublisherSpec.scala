@@ -37,6 +37,7 @@ class PublisherSpec(implicit env: ExecutionEnv) extends Specification {
       fileUploaded(publisher.publish(file.getName, file)) must beEqualTo(true).await
 
       // TODO subscribe
+
     }
 
     "publish a files to same bucket" in new S3ServerEmbedded {
