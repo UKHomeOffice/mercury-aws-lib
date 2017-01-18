@@ -1,5 +1,5 @@
-AWS Library for Scala (part of RTP suite of libraries)
-======================================================
+AWS Library for Scala
+=====================
 Scala library to interact with AWS e.g. easier coding and testing against SQS and S3.
 ElasticMQ can be used for embedded testing of the SQS messaging system and S3 Mock for AWS S3 testing.
 
@@ -19,7 +19,7 @@ Application
 -----------
 The application is configured as per a typical Scala application, where the default configuration file is "application.conf" (or reference.conf).
 This default file can be overridden with other "conf" files and then given to the application upon boot with the following example Java option:
-```bash
+```
 -Dconfig.file=test-classes/application.test.conf
 ```
 
