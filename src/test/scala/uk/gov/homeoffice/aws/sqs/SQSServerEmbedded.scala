@@ -7,10 +7,11 @@ import org.elasticmq.rest.sqs.SQSRestServerBuilder
 import org.specs2.execute.{AsResult, Result}
 import org.specs2.matcher.Scope
 import de.flapdoodle.embed.process.runtime.Network._
-import uk.gov.homeoffice.aws.sqs.subscription.Subscriber
+import uk.gov.homeoffice.aws.sqs.publish.Publisher
+import uk.gov.homeoffice.aws.sqs.subscribe.Subscriber
 import uk.gov.homeoffice.specs2.ComposableAround
 
-trait EmbeddedSQSServer extends SQSServer with QueueCreation with Scope with ComposableAround {
+trait SQSServerEmbedded extends SQSServer with QueueCreation with Scope with ComposableAround {
   val sqsHost = new URL(s"http://localhost:$getFreeServerPort")
 
   val server = SQSRestServerBuilder withInterface sqsHost.getHost withPort sqsHost.getPort start()

@@ -1,6 +1,7 @@
-package uk.gov.homeoffice.aws.sqs
+package uk.gov.homeoffice.aws.sqs.publish
 
 import com.amazonaws.services.sqs.model.SendMessageResult
+import uk.gov.homeoffice.aws.sqs._
 
 class Publisher(val queue: Queue)(implicit val sqsClient: SQSClient) extends QueueCreation {
   create(queue)

@@ -1,4 +1,4 @@
-package uk.gov.homeoffice.aws.sqs.subscription
+package uk.gov.homeoffice.aws.sqs.subscribe
 
 import uk.gov.homeoffice.aws.sqs.Message
 

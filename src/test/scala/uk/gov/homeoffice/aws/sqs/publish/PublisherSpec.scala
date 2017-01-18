@@ -1,11 +1,12 @@
-package uk.gov.homeoffice.aws.sqs
+package uk.gov.homeoffice.aws.sqs.publish
 
 import org.specs2.mutable.Specification
-import uk.gov.homeoffice.aws.sqs.subscription.Subscriber
+import uk.gov.homeoffice.aws.sqs.subscribe.Subscriber
+import uk.gov.homeoffice.aws.sqs.{Message, Queue, SQSServerEmbedded}
 
 class PublisherSpec extends Specification {
   "Publisher" should {
-    "publish some text" in new EmbeddedSQSServer {
+    "publish some text" in new SQSServerEmbedded {
       val queue = create(new Queue("test-queue"))
 
       val publisher = new Publisher(queue)

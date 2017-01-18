@@ -1,4 +1,4 @@
-package uk.gov.homeoffice.aws.sqs.subscription
+package uk.gov.homeoffice.aws.sqs.subscribe
 
 import java.security.MessageDigest
 import scala.util.{Failure, Success}

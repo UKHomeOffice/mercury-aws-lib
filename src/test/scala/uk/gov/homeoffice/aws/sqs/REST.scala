@@ -10,7 +10,7 @@ import uk.gov.homeoffice.akka.ActorSystemSpecification
   * To interface with (embedded) SQS server via HTTP, utilising Play's Web Service Client.
   */
 trait REST {
-  this: ActorSystemSpecification#ActorSystemContext with EmbeddedSQSServer =>
+  this: ActorSystemSpecification#ActorSystemContext with SQSServerEmbedded =>
 
   implicit val materializer = ActorMaterializer()
 
