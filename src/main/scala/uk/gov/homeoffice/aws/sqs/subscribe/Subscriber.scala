@@ -1,4 +1,4 @@
-package uk.gov.homeoffice.aws.sqs.subscription
+package uk.gov.homeoffice.aws.sqs.subscribe
 
 import scala.collection.JavaConversions._
 import uk.gov.homeoffice.aws.sqs._

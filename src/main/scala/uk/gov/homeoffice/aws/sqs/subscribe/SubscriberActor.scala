@@ -1,4 +1,4 @@
-package uk.gov.homeoffice.aws.sqs.subscription
+package uk.gov.homeoffice.aws.sqs.subscribe
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
@@ -7,6 +7,7 @@ import akka.actor.{Actor, ActorLogging, ActorRef}
 import com.amazonaws.services.sqs.model.{Message => SQSMessage}
 import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
+import uk.gov.homeoffice.aws.sqs.publish.Publisher
 import uk.gov.homeoffice.aws.sqs.{QueueCreation, _}
 import uk.gov.homeoffice.json.Json
 

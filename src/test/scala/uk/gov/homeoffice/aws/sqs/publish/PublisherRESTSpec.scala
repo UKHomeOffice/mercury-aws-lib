@@ -1,4 +1,4 @@
-package uk.gov.homeoffice.aws.sqs
+package uk.gov.homeoffice.aws.sqs.publish
 
 import scala.xml.Elem
 import play.api.http.Status.OK
@@ -7,7 +7,8 @@ import org.json4s.jackson.JsonMethods._
 import org.specs2.concurrent.ExecutionEnv
 import org.specs2.mutable.Specification
 import uk.gov.homeoffice.akka.ActorSystemSpecification
-import uk.gov.homeoffice.aws.sqs.subscription.Subscriber
+import uk.gov.homeoffice.aws.sqs.subscribe.Subscriber
+import uk.gov.homeoffice.aws.sqs.{Message, Queue, REST, SQSServerEmbedded}
 
 class PublisherRESTSpec(implicit ev: ExecutionEnv) extends Specification with ActorSystemSpecification {
   "Restful client" should {

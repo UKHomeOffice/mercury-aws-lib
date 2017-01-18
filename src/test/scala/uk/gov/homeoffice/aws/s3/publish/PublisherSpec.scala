@@ -1,32 +1,11 @@
-package uk.gov.homeoffice.aws.s3
+package uk.gov.homeoffice.aws.s3.publish
 
 import java.io.File
-import scala.concurrent.{Future, Promise}
-import scala.util.{Failure, Success, Try}
-import com.amazonaws.event.{ProgressEvent, ProgressEventType, ProgressListener}
-import com.amazonaws.services.s3.transfer.Upload
 import org.specs2.concurrent.ExecutionEnv
 import org.specs2.mutable.Specification
+import uk.gov.homeoffice.aws.s3.S3ServerEmbedded
 
 class PublisherSpec(implicit env: ExecutionEnv) extends Specification {
-  val fileUploaded: Try[Upload] => Future[Boolean] = {
-    case Success(upload) =>
-      val fileUploaded = Promise[Boolean]()
-
-      upload.addProgressListener(new ProgressListener {
-        override def progressChanged(progressEvent: ProgressEvent): Unit = {
-          if (progressEvent.getEventType == ProgressEventType.TRANSFER_COMPLETED_EVENT) {
-            fileUploaded success true
-          }
-        }
-      })
-
-      fileUploaded.future
-
-    case Failure(t) =>
-      throw t
-  }
-
   "Publisher" should {
     "publish a file" in new S3ServerEmbedded {
       val bucket = "test-bucket"
@@ -34,26 +13,32 @@ class PublisherSpec(implicit env: ExecutionEnv) extends Specification {
       val file = new File(s"$s3Directory/test-file.txt")
       val publisher = new Publisher(bucket)
 
-      fileUploaded(publisher.publish(file.getName, file)) must beEqualTo(true).await
+      publisher.publish(file.getName, file) must beLike[Result] {
+        case c: Completed => c.key mustEqual file.getName
+      }.await
 
       // TODO subscribe
 
     }
 
-    "publish a files to same bucket" in new S3ServerEmbedded {
+    "publish files to same bucket" in new S3ServerEmbedded {
       val bucket = "test-bucket"
 
       // First file to publish
       val file = new File(s"$s3Directory/test-file.txt")
       val publisher = new Publisher(bucket)
 
-      fileUploaded(publisher.publish(file.getName, file)) must beEqualTo(true).await
+      publisher.publish(file.getName, file) must beLike[Result] {
+        case c: Completed => c.key mustEqual file.getName
+      }.await
 
       // Second file to publish
       val file2 = new File(s"$s3Directory/test-file-2.txt")
       val publisher2 = new Publisher(bucket)
 
-      fileUploaded(publisher2.publish(file2.getName, file2)) must beEqualTo(true).await
+      publisher2.publish(file2.getName, file2) must beLike[Result] {
+        case c: Completed => c.key mustEqual file2.getName
+      }.await
     }
   }
 }

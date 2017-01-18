@@ -5,7 +5,8 @@ import akka.actor.{ActorSystem, Props}
 import com.amazonaws.auth.BasicAWSCredentials
 import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
-import uk.gov.homeoffice.aws.sqs.subscription.{JsonSubscription, Subscriber, SubscriberActor}
+import uk.gov.homeoffice.aws.sqs.publish.Publisher
+import uk.gov.homeoffice.aws.sqs.subscribe.{JsonSubscription, Subscriber, SubscriberActor}
 import uk.gov.homeoffice.system.Exit
 
 /**

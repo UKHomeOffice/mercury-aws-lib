@@ -1,4 +1,4 @@
-package uk.gov.homeoffice.aws.sqs.subscription
+package uk.gov.homeoffice.aws.sqs.subscribe
 
 import scala.concurrent.duration._
 import scala.concurrent.{Future, Promise}
@@ -13,7 +13,8 @@ import org.specs2.control.NoLanguageFeatures
 import org.specs2.mutable.Specification
 import uk.gov.homeoffice.akka.{ActorExpectations, ActorSystemSpecification}
 import uk.gov.homeoffice.aws.sqs._
-import uk.gov.homeoffice.aws.sqs.subscription.protocol.Processed
+import uk.gov.homeoffice.aws.sqs.publish.Publisher
+import uk.gov.homeoffice.aws.sqs.subscribe.protocol.Processed
 import uk.gov.homeoffice.concurrent.PromiseOps
 import uk.gov.homeoffice.json.JsonFormats
 
