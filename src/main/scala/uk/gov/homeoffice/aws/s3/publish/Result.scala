@@ -31,9 +31,9 @@ case class CompletedPartially(key: String, numberOfBytes: Long, numberOfMillisec
 }
 
 case class Cancelled(key: String) extends Result {
-  val message: String = s"Upload cancelled for $key"
+  val message = s"Upload cancelled for $key"
 }
 
 case class Failed(key: String) extends Result {
-  override val message: String = "" // TODO
+  val message = s"Upload failed for $key"
 }
