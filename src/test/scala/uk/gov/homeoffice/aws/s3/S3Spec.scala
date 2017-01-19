@@ -29,30 +29,30 @@ class S3Spec(implicit env: ExecutionEnv) extends Specification {
       val bucket = "test-bucket"
 
       // First file to push
-      val s3 = new S3(bucket)
-      val file = new File(s"$s3Directory/test-file.txt")
+      val s3First = new S3(bucket)
+      val file1 = new File(s"$s3Directory/test-file.txt")
 
-      s3.push(file.getName, file) must beLike[Push] {
-        case Push.Completed(key, _, _) => key mustEqual file.getName
+      s3First.push(file1.getName, file1) must beLike[Push] {
+        case Push.Completed(key, _, _) => key mustEqual file1.getName
       }.await
 
       // Second file to push
-      val s3_2 = new S3(bucket)
+      val s3Second = new S3(bucket)
       val file2 = new File(s"$s3Directory/test-file-2.txt")
 
-      s3_2.push(file2.getName, file2) must beLike[Push] {
+      s3Second.push(file2.getName, file2) must beLike[Push] {
         case Push.Completed(key, _, _) => key mustEqual file2.getName
       }.await
 
       // And pull them back
-      s3.pull(file.getName) must beLike[Pull] {
+      s3First.pull(file1.getName) must beLike[Pull] {
         case Pull(inputStream, contentType, numberOfBytes) =>
           Source.fromInputStream(inputStream).mkString mustEqual "blah blah"
           contentType must startWith("text/plain")
           numberOfBytes mustEqual 9
       }.await
 
-      s3_2.pull(file2.getName) must beLike[Pull] {
+      s3Second.pull(file2.getName) must beLike[Pull] {
         case Pull(inputStream, contentType, numberOfBytes) =>
           Source.fromInputStream(inputStream).mkString mustEqual "blah blah 2"
           contentType must startWith("text/plain")
