@@ -11,3 +11,4 @@ project/project
 project/target
 fpm/**/*.jar
 fpm/**/*.rpm
+src/test/resources/s3/test-bucket/
