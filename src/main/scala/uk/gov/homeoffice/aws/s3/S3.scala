@@ -31,8 +31,18 @@ class S3(bucket: String)(implicit val s3Client: S3Client) extends Logging {
       val transferManager = new TransferManager(s3Client)
       val upload = transferManager.upload(bucket, key, file)
 
+      Future {
+        val exception = upload.waitForException()
+
+        if (exception != null) {
+          result tryFailure exception
+        }
+
+        transferManager.shutdownNow(false)
+      }
+
       val done: Push => Unit = { r =>
-        result success r
+        result trySuccess r
         transferManager.shutdownNow(false)
       }
 
@@ -73,7 +83,7 @@ class S3(bucket: String)(implicit val s3Client: S3Client) extends Logging {
         }
       })
     } recover {
-      case t: Throwable => result failure t
+      case t: Throwable => result tryFailure t
     }
 
     result.future
