@@ -14,8 +14,8 @@ val `akka-http-version` = "10.0.1"
 val `play-version` = "2.5.10"
 val `aws-java-version` = "1.11.76"
 val `elasticmq-version` = "0.12.1"
-val `akka-scala-lib-version` = "2.1.2"
-val `io-scala-lib-version` = "1.9.3"
+val `akka-scala-lib-version` = "2.1.4"
+val `io-scala-lib-version` = "1.9.6"
 val `test-scala-lib-version` = "1.4.3"
 
 libraryDependencies ++= Seq(
