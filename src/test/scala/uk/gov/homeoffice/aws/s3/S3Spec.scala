@@ -77,7 +77,7 @@ class S3Spec(implicit env: ExecutionEnv) extends Specification {
       val bucket = "test-bucket"
       val s3 = new S3(bucket)
 
-      s3.pull("whoops.text") must throwAn[Exception]("Not Found").await
+      s3.pull("whoops.text") must throwAn[Exception]("NoSuchKey").await
     }
   }
 }

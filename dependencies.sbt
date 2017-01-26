@@ -35,7 +35,7 @@ libraryDependencies ++= Seq(
   "com.typesafe.akka" %% "akka-http-testkit" % `akka-http-version` % Test withSources(),
   "com.typesafe.play" %% "play-server" % `play-version` % Test withSources(),
   "com.typesafe.play" %% "play-test" % `play-version` % Test withSources(),
-  "io.findify" %% "s3mock" % "0.1.5" % Test withSources(),
+  "io.findify" %% "s3mock" % "0.1.6" % Test withSources(),
   "com.github.UKHomeOffice" %% "akka-scala-lib" % `akka-scala-lib-version` % Test classifier "tests" withSources(),
   "com.github.UKHomeOffice" %% "io-scala-lib" % `io-scala-lib-version` % Test classifier "tests" withSources(),
   "com.github.UKHomeOffice" %% "test-scala-lib" % `test-scala-lib-version` % Test classifier "tests" withSources()
