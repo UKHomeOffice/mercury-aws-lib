@@ -12,7 +12,7 @@ import uk.gov.homeoffice.specs2.ComposableAround
 trait SQSServerEmbedded extends SQSServer with QueueCreation with Scope with ComposableAround {
   val sqsHost = new URL(s"http://localhost:$getFreeServerPort")
 
-  val server = SQSRestServerBuilder withInterface sqsHost.getHost withPort sqsHost.getPort start()
+  val sqsServer = SQSRestServerBuilder withInterface sqsHost.getHost withPort sqsHost.getPort start()
 
   implicit val sqsClient = new SQSClient(new URL(s"$sqsHost/queue"), new BasicAWSCredentials("x", "x"))
 
@@ -26,11 +26,11 @@ trait SQSServerEmbedded extends SQSServer with QueueCreation with Scope with Com
     }
 
   override def around[R: AsResult](r: => R): Result = try {
-    server waitUntilStarted()
+    sqsServer waitUntilStarted()
     info(s"Started SQS $sqsHost")
     super.around(r)
   } finally {
     info(s"Stopping SQS $sqsHost")
-    server stopAndWait()
+    sqsServer stopAndWait()
   }
 }

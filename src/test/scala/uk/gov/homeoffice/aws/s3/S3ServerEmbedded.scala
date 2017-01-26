@@ -16,8 +16,8 @@ trait S3ServerEmbedded extends S3Server with Scope with ComposableAround with Lo
 
   val s3Directory = "src/test/resources/s3"
 
-  val server = S3Mock(s3Port, s3Directory)
-  server start
+  val s3Server = S3Mock(s3Port, s3Directory)
+  s3Server start
 
   implicit val s3Client = new S3Client(s3Host, new AnonymousAWSCredentials())
 
@@ -26,6 +26,6 @@ trait S3ServerEmbedded extends S3Server with Scope with ComposableAround with Lo
     super.around(r)
   } finally {
     info(s"Stopping S3 $s3Host")
-    server stop
+    s3Server stop
   }
 }
