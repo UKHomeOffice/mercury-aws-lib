@@ -7,8 +7,6 @@ import org.elasticmq.rest.sqs.SQSRestServerBuilder
 import org.specs2.execute.{AsResult, Result}
 import org.specs2.matcher.Scope
 import de.flapdoodle.embed.process.runtime.Network._
-import uk.gov.homeoffice.aws.sqs.publish.Publisher
-import uk.gov.homeoffice.aws.sqs.subscribe.Subscriber
 import uk.gov.homeoffice.specs2.ComposableAround
 
 trait SQSServerEmbedded extends SQSServer with QueueCreation with Scope with ComposableAround {
@@ -21,11 +19,10 @@ trait SQSServerEmbedded extends SQSServer with QueueCreation with Scope with Com
   val createMessage: String => Message =
     message => {
       val queue = create(new Queue(UUID.randomUUID().toString))
-      val publisher = new Publisher(queue)
-      val subscriber = new Subscriber(queue)
+      val sqs = new SQS(queue)
 
-      publisher publish message
-      subscriber.receive.head
+      sqs publish message
+      sqs.receive.head
     }
 
   override def around[R: AsResult](r: => R): Result = try {
