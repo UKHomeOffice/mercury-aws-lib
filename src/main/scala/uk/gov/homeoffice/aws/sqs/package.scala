@@ -3,7 +3,7 @@ package uk.gov.homeoffice.aws
 package object sqs {
   type MessageID = String
 
-  val `not-amazon-sqs-message` = "Not Amazon SQS Message"
+  val `not-aws-sqs-message` = "Not AWS SQS Message"
 
   def queueUrl(queueName: String)(implicit sqsClient: SQSClient): String = s"${sqsClient.sqsHost}/$queueName"
 
