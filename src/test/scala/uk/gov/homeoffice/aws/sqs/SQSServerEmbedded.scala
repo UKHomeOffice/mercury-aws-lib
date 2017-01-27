@@ -10,7 +10,7 @@ import de.flapdoodle.embed.process.runtime.Network._
 import uk.gov.homeoffice.specs2.ComposableAround
 
 trait SQSServerEmbedded extends SQSServer with QueueCreation with Scope with ComposableAround {
-  val sqsHost = new URL(s"http://localhost:$getFreeServerPort")
+  val sqsHost = new URL(s"http://127.0.0.1:$getFreeServerPort")
 
   val sqsServer = SQSRestServerBuilder withInterface sqsHost.getHost withPort sqsHost.getPort start()
 

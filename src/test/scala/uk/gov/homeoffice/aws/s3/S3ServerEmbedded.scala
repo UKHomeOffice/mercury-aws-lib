@@ -12,7 +12,7 @@ import uk.gov.homeoffice.specs2.ComposableAround
 
 trait S3ServerEmbedded extends S3Server with Scope with ComposableAround with Logging {
   val s3Port = getFreeServerPort
-  val s3Host = new URL(s"http://0.0.0.0:$s3Port")
+  val s3Host = new URL(s"http://127.0.0.1:$s3Port")
 
   val s3Directory = "src/test/resources/s3"
 
