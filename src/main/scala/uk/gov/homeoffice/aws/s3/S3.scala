@@ -1,8 +1,7 @@
 package uk.gov.homeoffice.aws.s3
 
 import java.io.File
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.{Future, Promise}
+import scala.concurrent.{ExecutionContext, Future, Promise}
 import scala.util.Try
 import com.amazonaws.event.ProgressEventType._
 import com.amazonaws.event.{ProgressEvent, ProgressListener}
@@ -12,8 +11,7 @@ import grizzled.slf4j.Logging
 class S3(bucket: String)(implicit val s3Client: S3Client) extends Logging {
   val s3Bucket = s3Client.createBucket(bucket)
 
-  // def pull()(implicit ec: ExecutionContext): Future[Pull] = TODO
-  def pull(key: String): Future[Pull] = Future {
+  def pull(key: String)(implicit ec: ExecutionContext): Future[Pull] = Future {
     val s3Object = s3Client.getObject(bucket, key)
     val inputStream = s3Object.getObjectContent
     val contentType = s3Object.getObjectMetadata.getContentType
@@ -23,8 +21,7 @@ class S3(bucket: String)(implicit val s3Client: S3Client) extends Logging {
     Pull(inputStream, contentType, numberOfBytes)
   }
 
-  // def push()(implicit ec: ExecutionContext): Future[Push] = TODO
-  def push(key: String, file: File): Future[Push] = { // TODO add argument to provide Progress that can be called back
+  def push(key: String, file: File)(implicit ec: ExecutionContext): Future[Push] = { // TODO add argument to provide Progress that can be called back
     val result = Promise[Push]()
 
     Try {
