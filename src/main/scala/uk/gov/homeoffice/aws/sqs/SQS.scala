@@ -1,7 +1,7 @@
 package uk.gov.homeoffice.aws.sqs
 
 import scala.collection.JavaConversions._
-import com.amazonaws.services.sqs.model.SendMessageResult
+import com.amazonaws.services.sqs.model.{QueueDoesNotExistException, SendMessageResult}
 
 class SQS(val queue: Queue)(implicit val sqsClient: SQSClient) extends QueueCreation {
   create(queue)
@@ -19,6 +19,11 @@ class SQS(val queue: Queue)(implicit val sqsClient: SQSClient) extends QueueCrea
   private def receive(queueName: String): Seq[Message] = try {
     sqsClient.receiveMessage(queueUrl(queueName)).getMessages.map(Message)
   } catch {
+    case t: QueueDoesNotExistException =>
+      t.printStackTrace()
+      create(queue)
+      Nil
+
     case t: Throwable =>
       t.printStackTrace()
       Nil
