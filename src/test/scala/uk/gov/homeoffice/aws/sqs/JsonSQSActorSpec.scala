@@ -10,6 +10,7 @@ import org.json4s.JsonAST.JObject
 import org.json4s.JsonDSL._
 import org.json4s._
 import org.json4s.jackson.JsonMethods._
+import org.json4s.jackson._
 import org.scalactic.{Good, Or}
 import org.specs2.concurrent.ExecutionEnv
 import org.specs2.mutable.Specification
@@ -69,7 +70,7 @@ class JsonSQSActorSpec(implicit ev: ExecutionEnv) extends Specification with Act
       val errorSubscriber = new SQS(queue)
 
       def publishedErrorMessage = Try {
-        (parse(errorSubscriber.receiveErrors.head.content) \ "error-message" \ "error").extract[String] contains "error: instance type (integer) does not match any allowed primitive type"
+        (parseJson(errorSubscriber.receiveErrors.head.content) \ "error-message" \ "error").extract[String] contains "error: instance type (integer) does not match any allowed primitive type"
       } getOrElse false
 
       true must eventually(beEqualTo(publishedErrorMessage))
@@ -113,7 +114,7 @@ class JsonSQSActorSpec(implicit ev: ExecutionEnv) extends Specification with Act
       val errorSubscriber = new SQS(queue)
 
       def publishedErrorMessage: Boolean =  Try {
-        val `error-message` = parse(errorSubscriber.receiveErrors.head.content) \ "error-message"
+        val `error-message` = parseJson(errorSubscriber.receiveErrors.head.content) \ "error-message"
 
         (`error-message` \ "json" == input) &&
         (`error-message` \ "error").extract[String].contains("error: instance type (integer) does not match any allowed primitive type")
@@ -168,7 +169,7 @@ class JsonSQSActorSpec(implicit ev: ExecutionEnv) extends Specification with Act
       val errorSubscriber = new SQS(queue)
 
       def publishedErrorMessage: Boolean =  Try {
-        val `error-message` = parse(errorSubscriber.receiveErrors.head.content) \ "error-message"
+        val `error-message` = parseJson(errorSubscriber.receiveErrors.head.content) \ "error-message"
 
         (`error-message` \ "json" == input) &&
         (`error-message` \ "error").extract[String].contains("error: instance type (integer) does not match any allowed primitive type")

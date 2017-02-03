@@ -4,6 +4,7 @@ import scala.xml.Elem
 import play.api.http.Status.OK
 import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
+import org.json4s.jackson._
 import org.specs2.concurrent.ExecutionEnv
 import org.specs2.mutable.Specification
 import uk.gov.homeoffice.akka.ActorSystemSpecification
@@ -53,7 +54,7 @@ class SQSRESTPublicationSpec(implicit ev: ExecutionEnv) extends Specification wi
           val subscriber = new SQS(queue)
 
           subscriber.receive must beLike {
-            case Seq(m: Message) => parse(m.content) mustEqual json
+            case Seq(m: Message) => parseJson(m.content) mustEqual json
           }
       }.await
     }

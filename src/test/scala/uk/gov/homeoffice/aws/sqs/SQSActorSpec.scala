@@ -7,14 +7,14 @@ import scala.util.Try
 import akka.actor.Props
 import akka.testkit.TestActorRef
 import org.json4s.JValue
-import org.json4s.jackson.JsonMethods._
+import org.json4s.jackson._
 import org.specs2.concurrent.ExecutionEnv
 import org.specs2.control.NoLanguageFeatures
 import org.specs2.mutable.Specification
 import uk.gov.homeoffice.akka.{ActorExpectations, ActorSystemSpecification}
+import uk.gov.homeoffice.aws.sqs.protocol._
 import uk.gov.homeoffice.concurrent.PromiseOps
 import uk.gov.homeoffice.json.JsonFormats
-import uk.gov.homeoffice.aws.sqs.protocol._
 
 class SQSActorSpec(implicit ev: ExecutionEnv) extends Specification with ActorSystemSpecification with JsonFormats with PromiseOps with NoLanguageFeatures {
   trait Context extends ActorSystemContext with ActorExpectations with SQSServerEmbedded {
@@ -53,7 +53,7 @@ class SQSActorSpec(implicit ev: ExecutionEnv) extends Specification with ActorSy
 
       val errorSubscriber = new SQS(queue)
 
-      def publishedErrorMessage: JValue = parse(errorSubscriber.receiveErrors.head.content)
+      def publishedErrorMessage: JValue = parseJson(errorSubscriber.receiveErrors.head.content)
 
       "Processing failed" must eventually(beEqualTo((publishedErrorMessage \ "error-message" \ "errorStackTrace" \ "errorMessage").extract[String]))
     }
