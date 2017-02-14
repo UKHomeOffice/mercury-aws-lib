@@ -8,6 +8,15 @@ import com.amazonaws.event.{ProgressEvent, ProgressListener}
 import com.amazonaws.services.s3.transfer.TransferManager
 import grizzled.slf4j.Logging
 
+/**
+  * You may want to "set path style access on" for the S3Client you provide by doing the following:
+  * <pre>
+  * s3Client.setS3ClientOptions(S3ClientOptions.builder().setPathStyleAccess(true).build())
+  * </pre>
+  * which configures the client to use path-style access for all requests.
+  * @param bucket String The name of the bucket
+  * @param s3Client S3Client to interact with the bucket on AWS S3
+  */
 class S3(bucket: String)(implicit val s3Client: S3Client) extends Logging {
   val s3Bucket = s3Client.createBucket(bucket)
 
