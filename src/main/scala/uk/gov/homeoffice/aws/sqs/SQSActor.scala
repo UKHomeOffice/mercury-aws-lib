@@ -108,7 +108,7 @@ abstract class SQSActor(val sqs: SQS, filters: (Message => Option[Message])*)(im
   /**
     * Override this method for custom deletion of messages from the message queue, or even to not delete a message.
     * NOTE That by default this method is not called unless you either:
-    * (i)   Use Akka messaging e.g. have your implenting actor of this class fire a Processed to itself, or have another actor fire said message to this actor.
+    * (i)   Use Akka messaging e.g. have your implementing actor of this class fire a Processed to itself, or have another actor fire said message to this actor.
     * (ii)  Mixin an AfterProcess such as DefaultAfterProcess
     * (iii) Call this method directly from your own process method.
     * @param message Message to delete
