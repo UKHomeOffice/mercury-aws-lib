@@ -2,6 +2,9 @@ package uk.gov.homeoffice.aws.s3
 
 import java.io.File
 import scala.io.Source
+import com.amazonaws.ClientConfiguration
+import com.amazonaws.auth.AnonymousAWSCredentials
+import com.amazonaws.retry.PredefinedRetryPolicies
 import org.specs2.concurrent.ExecutionEnv
 import org.specs2.mutable.Specification
 
@@ -78,6 +81,20 @@ class S3Spec(implicit env: ExecutionEnv) extends Specification {
       val s3 = new S3(bucket)
 
       s3.pull("whoops.text") must throwAn[Exception]("NoSuchKey").await
+    }
+
+    "configured" in new S3ServerEmbedded {
+      override implicit val s3Client: S3Client = new S3Client(s3Host, new AnonymousAWSCredentials())(new ClientConfiguration().withRetryPolicy(PredefinedRetryPolicies.NO_RETRY_POLICY))
+
+      s3Client.clientConfig.getRetryPolicy mustEqual PredefinedRetryPolicies.NO_RETRY_POLICY
+    }
+
+    "configured implicitly" in new S3ServerEmbedded {
+      implicit val clientConfiguration = new ClientConfiguration().withRetryPolicy(PredefinedRetryPolicies.NO_RETRY_POLICY)
+
+      override implicit val s3Client: S3Client = new S3Client(s3Host, new AnonymousAWSCredentials())
+
+      s3Client.clientConfig.getRetryPolicy mustEqual PredefinedRetryPolicies.NO_RETRY_POLICY
     }
   }
 }

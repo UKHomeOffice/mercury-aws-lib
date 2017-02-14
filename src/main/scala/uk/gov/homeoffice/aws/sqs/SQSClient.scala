@@ -1,11 +1,12 @@
 package uk.gov.homeoffice.aws.sqs
 
 import java.net.URL
+import com.amazonaws.ClientConfiguration
 import com.amazonaws.auth.AWSCredentials
 import com.amazonaws.services.sqs.AmazonSQSClient
 import grizzled.slf4j.Logging
 
-class SQSClient(val sqsHost: URL, credentials: AWSCredentials) extends AmazonSQSClient(credentials) with Logging {
+class SQSClient(val sqsHost: URL, credentials: AWSCredentials)(implicit clientConfiguration: ClientConfiguration = new ClientConfiguration) extends AmazonSQSClient(credentials, clientConfiguration) with Logging {
   val Host = """^(http[s]?):\/?\/?([^:\/\s]+):?(\d*).*""".r
 
   sqsHost.toString match {
@@ -21,4 +22,6 @@ class SQSClient(val sqsHost: URL, credentials: AWSCredentials) extends AmazonSQS
       info(s"Configuring endpoint as $protocol://$host:$port")
       setEndpoint(s"$protocol://$host:$port")
   }
+
+  def clientConfig = clientConfiguration
 }
