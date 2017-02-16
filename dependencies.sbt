@@ -16,7 +16,7 @@ val `akka-http-version` = "10.0.3"
 val `play-version` = "2.5.12"
 val `aws-java-version` = "1.11.76"
 val `elasticmq-version` = "0.13.1"
-val `akka-scala-lib-version` = "2.1.13"
+val `akka-scala-lib-version` = "2.1.15"
 val `io-scala-lib-version` = "1.9.12"
 val `test-scala-lib-version` = "1.4.4"
 
