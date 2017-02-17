@@ -1,12 +1,12 @@
 package uk.gov.homeoffice.aws.s3
 
 import java.io.File
-import java.util.concurrent.atomic.{AtomicBoolean, AtomicLong}
+import java.util.concurrent.atomic.AtomicLong
 import scala.concurrent.{ExecutionContext, Future, Promise}
 import scala.util.Try
 import com.amazonaws.event.ProgressEventType._
 import com.amazonaws.event.{ProgressEvent, ProgressListener}
-import com.amazonaws.services.s3.transfer.TransferManager
+import com.amazonaws.services.s3.transfer.TransferManagerBuilder
 import com.google.common.util.concurrent.AtomicDouble
 import grizzled.slf4j.Logging
 
@@ -36,7 +36,7 @@ class S3(bucket: String)(implicit val s3Client: S3Client) extends Logging {
     val result = Promise[Push]()
 
     Try {
-      val transferManager = new TransferManager(s3Client)
+      val transferManager = TransferManagerBuilder.standard().withS3Client(s3Client).build()
       val upload = transferManager.upload(bucket, key, file)
 
       Future {
@@ -57,7 +57,6 @@ class S3(bucket: String)(implicit val s3Client: S3Client) extends Logging {
       upload.addProgressListener(new ProgressListener {
         val start = new AtomicLong(0L)
         val currentPercentTransferred = new AtomicDouble(0.0)
-        val complete = new AtomicBoolean(false)
 
         override def progressChanged(progressEvent: ProgressEvent): Unit = progressEvent.getEventType match {
           case TRANSFER_STARTED_EVENT =>
@@ -71,17 +70,14 @@ class S3(bucket: String)(implicit val s3Client: S3Client) extends Logging {
               Push.CompletedPartially(file.getName, upload.getProgress.getTotalBytesToTransfer, System.currentTimeMillis - start.get())
             }
 
-            info(completed.message)
             done(completed)
 
           case TRANSFER_CANCELED_EVENT =>
             val cancelled = Push.Cancelled(file.getName)
-            warn(cancelled.message)
             done(cancelled)
 
-          case e @ (TRANSFER_FAILED_EVENT | TRANSFER_PART_FAILED_EVENT) =>
+          case TRANSFER_FAILED_EVENT | TRANSFER_PART_FAILED_EVENT =>
             val failed = Push.Failed(file.getName)
-            error(s"${failed.message} because of $e")
             done(failed)
 
           case _ =>
@@ -90,8 +86,7 @@ class S3(bucket: String)(implicit val s3Client: S3Client) extends Logging {
               info(s"Push progress for ${file.getName}: $currentPercentTransferred %")
             }
 
-            if (upload.getProgress.getPercentTransferred == 100 && !complete.get()) {
-              complete.set(true)
+            if (upload.getProgress.getPercentTransferred == 100) {
               progressChanged(new ProgressEvent(TRANSFER_COMPLETED_EVENT))
             }
         }
@@ -100,7 +95,15 @@ class S3(bucket: String)(implicit val s3Client: S3Client) extends Logging {
       case t: Throwable => result tryFailure t
     }
 
-    result.future
+    result.future map { push =>
+      push match {
+        case p: Push.Failed => error(p.message)
+        case p: Push.Cancelled => warn(p.message)
+        case p => info(p.message)
+      }
+
+      push
+    }
   }
 
   // TODO
