@@ -1,12 +1,13 @@
 package uk.gov.homeoffice.aws.s3
 
 import java.io.File
+import java.util.concurrent.atomic.{AtomicBoolean, AtomicLong}
 import scala.concurrent.{ExecutionContext, Future, Promise}
 import scala.util.Try
 import com.amazonaws.event.ProgressEventType._
 import com.amazonaws.event.{ProgressEvent, ProgressListener}
-import com.amazonaws.services.s3.transfer.Transfer.TransferState._
 import com.amazonaws.services.s3.transfer.TransferManager
+import com.google.common.util.concurrent.AtomicDouble
 import grizzled.slf4j.Logging
 
 /**
@@ -54,19 +55,20 @@ class S3(bucket: String)(implicit val s3Client: S3Client) extends Logging {
       }
 
       upload.addProgressListener(new ProgressListener {
-        var start = 0L
-        var currentPercentTransferred = 0.0
+        val start = new AtomicLong(0L)
+        val currentPercentTransferred = new AtomicDouble(0.0)
+        val complete = new AtomicBoolean(false)
 
         override def progressChanged(progressEvent: ProgressEvent): Unit = progressEvent.getEventType match {
           case TRANSFER_STARTED_EVENT =>
             info(s"Push started for ${file.getName} to bucket $bucket")
-            start = System.currentTimeMillis
+            start.set(System.currentTimeMillis)
 
           case c @ (TRANSFER_COMPLETED_EVENT | TRANSFER_PART_COMPLETED_EVENT) =>
             val completed = if (c == TRANSFER_COMPLETED_EVENT) {
-              Push.Completed(file.getName, upload.getProgress.getTotalBytesToTransfer, System.currentTimeMillis - start)
+              Push.Completed(file.getName, upload.getProgress.getTotalBytesToTransfer, System.currentTimeMillis - start.get())
             } else {
-              Push.CompletedPartially(file.getName, upload.getProgress.getTotalBytesToTransfer, System.currentTimeMillis - start)
+              Push.CompletedPartially(file.getName, upload.getProgress.getTotalBytesToTransfer, System.currentTimeMillis - start.get())
             }
 
             info(completed.message)
@@ -83,12 +85,13 @@ class S3(bucket: String)(implicit val s3Client: S3Client) extends Logging {
             done(failed)
 
           case _ =>
-            if (currentPercentTransferred != upload.getProgress.getPercentTransferred) {
-              currentPercentTransferred = upload.getProgress.getPercentTransferred
+            if (currentPercentTransferred.get() != upload.getProgress.getPercentTransferred) {
+              currentPercentTransferred.set(upload.getProgress.getPercentTransferred)
               info(s"Push progress for ${file.getName}: $currentPercentTransferred %")
             }
 
-            if (upload.getProgress.getPercentTransferred == 100) {
+            if (upload.getProgress.getPercentTransferred == 100 && !complete.get()) {
+              complete.set(true)
               progressChanged(new ProgressEvent(TRANSFER_COMPLETED_EVENT))
             }
         }
