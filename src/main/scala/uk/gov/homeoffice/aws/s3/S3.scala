@@ -77,6 +77,8 @@ class S3(bucket: String)(implicit val s3Client: S3Client) extends Logging {
               val cancelled = Push.Cancelled(file.getName)
               warn(cancelled.message)
               done(cancelled)
+            } else if (upload.getState == Completed) {
+              progressChanged(new ProgressEvent(TRANSFER_COMPLETED_EVENT))
             }
 
           case e @ (TRANSFER_FAILED_EVENT | TRANSFER_PART_FAILED_EVENT) =>
@@ -84,6 +86,8 @@ class S3(bucket: String)(implicit val s3Client: S3Client) extends Logging {
               val failed = Push.Failed(file.getName)
               error(s"${failed.message} because of $e")
               done(failed)
+            } else if (upload.getState == Completed) {
+              progressChanged(new ProgressEvent(TRANSFER_COMPLETED_EVENT))
             }
 
           case _ =>
