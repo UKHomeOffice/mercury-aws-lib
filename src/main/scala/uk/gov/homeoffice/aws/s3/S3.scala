@@ -5,6 +5,7 @@ import scala.concurrent.{ExecutionContext, Future, Promise}
 import scala.util.Try
 import com.amazonaws.event.ProgressEventType._
 import com.amazonaws.event.{ProgressEvent, ProgressListener}
+import com.amazonaws.services.s3.transfer.Transfer.TransferState._
 import com.amazonaws.services.s3.transfer.TransferManager
 import grizzled.slf4j.Logging
 
@@ -72,14 +73,18 @@ class S3(bucket: String)(implicit val s3Client: S3Client) extends Logging {
             done(completed)
 
           case TRANSFER_CANCELED_EVENT =>
-            val cancelled = Push.Cancelled(file.getName)
-            warn(cancelled.message)
-            done(cancelled)
+            if (upload.getState == Canceled) {
+              val cancelled = Push.Cancelled(file.getName)
+              warn(cancelled.message)
+              done(cancelled)
+            }
 
           case e @ (TRANSFER_FAILED_EVENT | TRANSFER_PART_FAILED_EVENT) =>
-            val failed = Push.Failed(file.getName)
-            error(s"${failed.message} because of $e")
-            done(failed)
+            if (upload.getState == Failed) {
+              val failed = Push.Failed(file.getName)
+              error(s"${failed.message} because of $e")
+              done(failed)
+            }
 
           case _ =>
             if (currentPercentTransferred != upload.getProgress.getPercentTransferred) {
