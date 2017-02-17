@@ -3,9 +3,7 @@ package uk.gov.homeoffice.aws.sqs
 import grizzled.slf4j.Logging
 
 trait QueueCreation extends Logging {
-  this: { val sqsClient: SQSClient } =>
-
-  def create(queue: Queue): Queue = {
+  def create(queue: Queue)(implicit sqsClient: SQSClient): Queue = {
     def createQueue(queueName: String) = try {
       info(s"Creating queue $queueName")
       sqsClient createQueue queueName
