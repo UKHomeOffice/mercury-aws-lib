@@ -77,10 +77,11 @@ abstract class SQSActor(val sqs: SQS, filters: (Message => Option[Message])*)(im
         }
 
       case sqsMessage: SQSMessage =>
+        log.debug(s"Received SQS message: $sqsMessage")
         self ! Message(sqsMessage)
 
       case message: Message =>
-        log.info(s"Received subscribed message: $message")
+        log.debug(s"Received subscribed message: $message")
 
         filters.foldLeft(Option(message)) { (m, f) =>
           m flatMap f
@@ -92,7 +93,7 @@ abstract class SQSActor(val sqs: SQS, filters: (Message => Option[Message])*)(im
         self ! Subscribe
 
       case msg =>
-        log.info(s"Received message: $msg")
+        log.debug(s"Received message: $msg")
         receive.applyOrElse(msg, unhandled)
     }
 
@@ -115,6 +116,7 @@ abstract class SQSActor(val sqs: SQS, filters: (Message => Option[Message])*)(im
     * @return Message that was successfully deleted
     */
   def delete(message: Message): Message = {
+    log.debug(s"Deleting message: $message")
     sqsClient.deleteMessage(queueUrl(queue.queueName), message.sqsMessage.getReceiptHandle)
     message
   }
