@@ -6,6 +6,7 @@ import scala.concurrent.{ExecutionContext, Future, Promise}
 import scala.util.Try
 import com.amazonaws.event.ProgressEventType._
 import com.amazonaws.event.{ProgressEvent, ProgressListener}
+import com.amazonaws.services.s3.model.PutObjectRequest
 import com.amazonaws.services.s3.transfer.TransferManagerBuilder
 import com.google.common.util.concurrent.AtomicDouble
 import grizzled.slf4j.Logging
@@ -32,12 +33,19 @@ class S3(bucket: String)(implicit val s3Client: S3Client) extends Logging {
     Pull(inputStream, contentType, numberOfBytes)
   }
 
-  def push(key: String, file: File)(implicit ec: ExecutionContext): Future[Push] = { // TODO add argument to provide Progress that can be called back
+  def push(key: String, file: File, encryption: Option[Encryption] = None)(implicit ec: ExecutionContext): Future[Push] = { // TODO add argument to provide Progress that can be called back
     val result = Promise[Push]()
 
     Try {
       val transferManager = TransferManagerBuilder.standard().withS3Client(s3Client).build()
-      val upload = transferManager.upload(bucket, key, file)
+
+      val putObjectRequest = {
+        val p = new PutObjectRequest(bucket, key, file)
+
+        encryption map { _.encrypt(p) } getOrElse p
+      }
+
+      val upload = transferManager.upload(putObjectRequest)
 
       Future {
         val exception = upload.waitForException()

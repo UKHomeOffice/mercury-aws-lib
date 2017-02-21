@@ -28,6 +28,42 @@ class S3Spec(implicit env: ExecutionEnv) extends Specification {
       }.await
     }
 
+    "push an AES256 encrypted file and pull it back" in new S3ServerEmbedded {
+      val bucket = "test-bucket"
+      val s3 = new S3(bucket)
+
+      val file = new File(s"$s3Directory/test-file.txt")
+
+      s3.push(file.getName, file, Some(AES256("secret key"))) must beLike[Push] {
+        case c: Push.Completed => c.key mustEqual file.getName
+      }.await
+
+      s3.pull(file.getName) must beLike[Pull] {
+        case Pull(inputStream, contentType, numberOfBytes) =>
+          Source.fromInputStream(inputStream).mkString mustEqual "blah blah"
+          contentType must startWith("text/plain")
+          numberOfBytes mustEqual 9
+      }.await
+    }
+
+    "push a KMS encrypted file and pull it back" in new S3ServerEmbedded {
+      val bucket = "test-bucket"
+      val s3 = new S3(bucket)
+
+      val file = new File(s"$s3Directory/test-file.txt")
+
+      s3.push(file.getName, file, Some(KMS("secret key"))) must beLike[Push] {
+        case c: Push.Completed => c.key mustEqual file.getName
+      }.await
+
+      s3.pull(file.getName) must beLike[Pull] {
+        case Pull(inputStream, contentType, numberOfBytes) =>
+          Source.fromInputStream(inputStream).mkString mustEqual "blah blah"
+          contentType must startWith("text/plain")
+          numberOfBytes mustEqual 9
+      }.await
+    }
+
     "push files to same bucket and pull them back" in new S3ServerEmbedded {
       val bucket = "test-bucket"
 
