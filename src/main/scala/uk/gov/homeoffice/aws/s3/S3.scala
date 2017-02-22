@@ -2,11 +2,12 @@ package uk.gov.homeoffice.aws.s3
 
 import java.io.File
 import java.util.concurrent.atomic.AtomicLong
+import scala.collection.JavaConversions._
 import scala.concurrent.{ExecutionContext, Future, Promise}
 import scala.util.Try
 import com.amazonaws.event.ProgressEventType._
 import com.amazonaws.event.{ProgressEvent, ProgressListener}
-import com.amazonaws.services.s3.model.{AmazonS3Exception, PutObjectRequest}
+import com.amazonaws.services.s3.model.PutObjectRequest
 import com.amazonaws.services.s3.transfer.TransferManagerBuilder
 import com.google.common.util.concurrent.AtomicDouble
 import grizzled.slf4j.Logging
@@ -23,23 +24,20 @@ import grizzled.slf4j.Logging
 class S3(bucket: String)(implicit val s3Client: S3Client) extends Logging {
   val s3Bucket = s3Client.createBucket(bucket)
 
-  def pull(key: String)(implicit ec: ExecutionContext): Future[Pull] = Future {
-    try {
-      val s3Object = s3Client.getObject(bucket, key)
-      val inputStream = s3Object.getObjectContent
-      val contentType = s3Object.getObjectMetadata.getContentType
-      val numberOfBytes = s3Object.getObjectMetadata.getContentLength
-      info(s"""Pull for $key with $numberOfBytes Bytes of content type "$contentType" from bucket $bucket""")
+  def pullResource(key: String)(implicit ec: ExecutionContext): Future[Pull] = Future {
+    val s3Object = s3Client.getObject(bucket, key)
+    val inputStream = s3Object.getObjectContent
+    val contentType = s3Object.getObjectMetadata.getContentType
+    val numberOfBytes = s3Object.getObjectMetadata.getContentLength
+    info(s"""Pull for $key with $numberOfBytes Bytes of content type "$contentType" from bucket $bucket""")
 
-      Resource(key, inputStream, contentType, numberOfBytes)
+    Pull(key, inputStream, contentType, numberOfBytes)
+  }
 
-    } catch {
-      case e: AmazonS3Exception if e.getMessage.startsWith("The resource you requested does not exist") =>
-        ResourceMissing(s"""Requested resource with given key "$key" does not exist on S3""", Option(e.getCause))
-
-      case t: Throwable =>
-        ResourceFailure(t)
-    }
+  def pullResources(key: String)(implicit ec: ExecutionContext): Future[Seq[Pull]] = Future {
+    s3Client.listObjects(bucket, s"$key/").getObjectSummaries.sortBy(_.getLastModified).map(_.getKey)
+  } flatMap { keys =>
+    Future.sequence(keys map pullResource)
   }
 
   def push(key: String, file: File, encryption: Option[Encryption] = None)(implicit ec: ExecutionContext): Future[Push] = { // TODO add argument to provide Progress that can be called back
