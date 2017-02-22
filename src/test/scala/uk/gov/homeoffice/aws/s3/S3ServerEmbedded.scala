@@ -29,3 +29,4 @@ trait S3ServerEmbedded extends S3Server with Scope with ComposableAround with Lo
     s3Server stop
   }
 }
+

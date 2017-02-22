@@ -21,43 +21,7 @@ class S3Spec(implicit env: ExecutionEnv) extends Specification {
       }.await
 
       s3.pull(file.getName) must beLike[Pull] {
-        case Pull(inputStream, contentType, numberOfBytes) =>
-          Source.fromInputStream(inputStream).mkString mustEqual "blah blah"
-          contentType must startWith("text/plain")
-          numberOfBytes mustEqual 9
-      }.await
-    }
-
-    "push an AES256 encrypted file and pull it back" in new S3ServerEmbedded {
-      val bucket = "test-bucket"
-      val s3 = new S3(bucket)
-
-      val file = new File(s"$s3Directory/test-file.txt")
-
-      s3.push(file.getName, file, Some(AES256("secret key"))) must beLike[Push] {
-        case c: Push.Completed => c.key mustEqual file.getName
-      }.await
-
-      s3.pull(file.getName) must beLike[Pull] {
-        case Pull(inputStream, contentType, numberOfBytes) =>
-          Source.fromInputStream(inputStream).mkString mustEqual "blah blah"
-          contentType must startWith("text/plain")
-          numberOfBytes mustEqual 9
-      }.await
-    }
-
-    "push a KMS encrypted file and pull it back" in new S3ServerEmbedded {
-      val bucket = "test-bucket"
-      val s3 = new S3(bucket)
-
-      val file = new File(s"$s3Directory/test-file.txt")
-
-      s3.push(file.getName, file, Some(KMS("secret key"))) must beLike[Push] {
-        case c: Push.Completed => c.key mustEqual file.getName
-      }.await
-
-      s3.pull(file.getName) must beLike[Pull] {
-        case Pull(inputStream, contentType, numberOfBytes) =>
+        case Resource(inputStream, contentType, numberOfBytes) =>
           Source.fromInputStream(inputStream).mkString mustEqual "blah blah"
           contentType must startWith("text/plain")
           numberOfBytes mustEqual 9
@@ -85,14 +49,14 @@ class S3Spec(implicit env: ExecutionEnv) extends Specification {
 
       // And pull them back
       s3First.pull(file1.getName) must beLike[Pull] {
-        case Pull(inputStream, contentType, numberOfBytes) =>
+        case Resource(inputStream, contentType, numberOfBytes) =>
           Source.fromInputStream(inputStream).mkString mustEqual "blah blah"
           contentType must startWith("text/plain")
           numberOfBytes mustEqual 9
       }.await
 
       s3Second.pull(file2.getName) must beLike[Pull] {
-        case Pull(inputStream, contentType, numberOfBytes) =>
+        case Resource(inputStream, contentType, numberOfBytes) =>
           Source.fromInputStream(inputStream).mkString mustEqual "blah blah 2"
           contentType must startWith("text/plain")
           numberOfBytes mustEqual 11
@@ -116,7 +80,10 @@ class S3Spec(implicit env: ExecutionEnv) extends Specification {
       val bucket = "test-bucket"
       val s3 = new S3(bucket)
 
-      s3.pull("whoops.text") must throwAn[Exception]("NoSuchKey").await
+      s3.pull("whoops.text") must beLike[Pull] {
+        case ResourceMissing(message, _) =>
+          message mustEqual """Requested resource with given key "whoops.text" does not exist on S3"""
+      }.await
     }
 
     "configured" in new S3ServerEmbedded {
