@@ -3,7 +3,7 @@ package uk.gov.homeoffice.aws.s3
 import java.io.File
 import java.util.concurrent.atomic.AtomicLong
 import scala.concurrent.{ExecutionContext, Future, Promise}
-import scala.util.{Failure, Try}
+import scala.util.Try
 import com.amazonaws.event.ProgressEventType._
 import com.amazonaws.event.{ProgressEvent, ProgressListener}
 import com.amazonaws.services.s3.model.{AmazonS3Exception, PutObjectRequest}
@@ -31,10 +31,12 @@ class S3(bucket: String)(implicit val s3Client: S3Client) extends Logging {
       val numberOfBytes = s3Object.getObjectMetadata.getContentLength
       info(s"""Pull for $key with $numberOfBytes Bytes of content type "$contentType" from bucket $bucket""")
 
-      Resource(inputStream, contentType, numberOfBytes)
+      Resource(key, inputStream, contentType, numberOfBytes)
+
     } catch {
       case e: AmazonS3Exception if e.getMessage.startsWith("The resource you requested does not exist") =>
         ResourceMissing(s"""Requested resource with given key "$key" does not exist on S3""", Option(e.getCause))
+
       case t: Throwable =>
         ResourceFailure(t)
     }

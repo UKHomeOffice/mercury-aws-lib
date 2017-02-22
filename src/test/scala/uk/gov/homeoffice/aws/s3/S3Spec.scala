@@ -21,7 +21,8 @@ class S3Spec(implicit env: ExecutionEnv) extends Specification {
       }.await
 
       s3.pull(file.getName) must beLike[Pull] {
-        case Resource(inputStream, contentType, numberOfBytes) =>
+        case Resource(key, inputStream, contentType, numberOfBytes) =>
+          key mustEqual file.getName
           Source.fromInputStream(inputStream).mkString mustEqual "blah blah"
           contentType must startWith("text/plain")
           numberOfBytes mustEqual 9
@@ -49,14 +50,16 @@ class S3Spec(implicit env: ExecutionEnv) extends Specification {
 
       // And pull them back
       s3First.pull(file1.getName) must beLike[Pull] {
-        case Resource(inputStream, contentType, numberOfBytes) =>
+        case Resource(key, inputStream, contentType, numberOfBytes) =>
+          key mustEqual file1.getName
           Source.fromInputStream(inputStream).mkString mustEqual "blah blah"
           contentType must startWith("text/plain")
           numberOfBytes mustEqual 9
       }.await
 
       s3Second.pull(file2.getName) must beLike[Pull] {
-        case Resource(inputStream, contentType, numberOfBytes) =>
+        case Resource(key, inputStream, contentType, numberOfBytes) =>
+          key mustEqual file2.getName
           Source.fromInputStream(inputStream).mkString mustEqual "blah blah 2"
           contentType must startWith("text/plain")
           numberOfBytes mustEqual 11

@@ -4,7 +4,7 @@ import java.io.InputStream
 
 sealed trait Pull
 
-case class Resource(inputStream: InputStream, contentType: String, numberOfBytes: Long) extends Pull
+case class Resource(key: String, inputStream: InputStream, contentType: String, numberOfBytes: Long) extends Pull
 
 case class ResourceMissing(message: String, cause: Option[Throwable]) extends Pull
 
