@@ -1,4 +1,3 @@
-/*
 package uk.gov.homeoffice.aws.s3
 
 import java.io.{File, InputStream}
@@ -34,15 +33,15 @@ class S3EncryptionSpec(implicit env: ExecutionEnv) extends Specification {
         case c: Push.Completed => c.key mustEqual file.getName
       }.await
 
-      s3.pull(file.getName) must beLike[Pull] {
-        case Pull(inputStream, contentType, numberOfBytes) =>
+      s3.pullResource(file.getName) must beLike[Resource] {
+        case Resource(key, inputStream, contentType, numberOfBytes) =>
           Source.fromInputStream(inputStream).mkString mustEqual "blah blah"
           contentType must startWith("text/plain")
           numberOfBytes mustEqual 9
       }.await
     }
 
-    "push a KMS encrypted file and pull it back" in new S3ServerEmbedded {
+    /*"push a KMS encrypted file and pull it back" in new S3ServerEmbedded {
       val bucket = "test-bucket"
       val s3 = new S3(bucket)
 
@@ -52,13 +51,13 @@ class S3EncryptionSpec(implicit env: ExecutionEnv) extends Specification {
         case c: Push.Completed => c.key mustEqual file.getName
       }.await
 
-      s3.pull(file.getName) must beLike[Pull] {
-        case Pull(inputStream, contentType, numberOfBytes) =>
+      s3.pullResource(file.getName) must beLike[Resource] {
+        case Resource(key, inputStream, contentType, numberOfBytes) =>
           Source.fromInputStream(inputStream).mkString mustEqual "blah blah"
           contentType must startWith("text/plain")
           numberOfBytes mustEqual 9
       }.await
-    }
+    }*/
   }
 }
 
@@ -196,4 +195,4 @@ class DummyTrustManager extends X509TrustManager {
   override def checkServerTrusted(arg0: Array[X509Certificate], arg1: String) = {
     println("checkServedTrusted "+arg0+" ... "+arg1)
   }
-}*/
+}
