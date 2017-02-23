@@ -12,9 +12,6 @@ import org.specs2.mutable.Specification
 class S3Spec(implicit env: ExecutionEnv) extends Specification {
   "S3" should {
     "push a file and pull it back" in new S3ServerEmbedded {
-      val bucket = "test-bucket"
-      val s3 = new S3(bucket)
-
       val file = new File(s"$s3Directory/test-file.txt")
 
       s3.push(file.getName, file) must beLike[Push] {
@@ -31,26 +28,22 @@ class S3Spec(implicit env: ExecutionEnv) extends Specification {
     }
 
     "push files to same bucket and pull them back" in new S3ServerEmbedded {
-      val bucket = "test-bucket"
-
       // First file to push
-      val s3First = new S3(bucket)
       val file1 = new File(s"$s3Directory/test-file.txt")
 
-      s3First.push(file1.getName, file1) must beLike[Push] {
+      s3.push(file1.getName, file1) must beLike[Push] {
         case Push.Completed(key, _, _) => key mustEqual file1.getName
       }.await
 
       // Second file to push
-      val s3Second = new S3(bucket)
       val file2 = new File(s"$s3Directory/test-file-2.txt")
 
-      s3Second.push(file2.getName, file2) must beLike[Push] {
+      s3.push(file2.getName, file2) must beLike[Push] {
         case Push.Completed(key, _, _) => key mustEqual file2.getName
       }.await
 
       // And pull them back
-      s3First.pullResource(file1.getName) must beLike[Pull] {
+      s3.pullResource(file1.getName) must beLike[Pull] {
         case Pull(key, inputStream, contentType, numberOfBytes) =>
           key mustEqual file1.getName
           Source.fromInputStream(inputStream).mkString mustEqual "blah blah"
@@ -58,7 +51,7 @@ class S3Spec(implicit env: ExecutionEnv) extends Specification {
           numberOfBytes mustEqual 9
       }.await
 
-      s3Second.pullResource(file2.getName) must beLike[Pull] {
+      s3.pullResource(file2.getName) must beLike[Pull] {
         case Pull(key, inputStream, contentType, numberOfBytes) =>
           key mustEqual file2.getName
           Source.fromInputStream(inputStream).mkString mustEqual "blah blah 2"
@@ -68,13 +61,10 @@ class S3Spec(implicit env: ExecutionEnv) extends Specification {
     }
 
     "push files to folder in bucket and pull them back" in new S3ServerEmbedded {
-      val bucket = "test-bucket"
-
       // First file to push
-      val s3First = new S3(bucket)
       val file1 = new File(s"$s3Directory/test-file.txt")
 
-      s3First.push(s"folder/${file1.getName}", file1) must beLike[Push] {
+      s3.push(s"folder/${file1.getName}", file1) must beLike[Push] {
         case Push.Completed(key, _, _) => key mustEqual file1.getName
       }.await
 
@@ -89,7 +79,7 @@ class S3Spec(implicit env: ExecutionEnv) extends Specification {
       }.await
 
       // And pull them back
-      s3First.pullResources("folder") must beLike[Seq[Pull]] {
+      s3.pullResources("folder") must beLike[Seq[Pull]] {
         case Seq(Pull(key1, inputStream1, contentType1, numberOfBytes1), Pull(key2, inputStream2, contentType2, numberOfBytes2)) =>
           key1 mustEqual s"folder/${file1.getName}"
           Source.fromInputStream(inputStream1).mkString mustEqual "blah blah"
@@ -108,18 +98,12 @@ class S3Spec(implicit env: ExecutionEnv) extends Specification {
     }
 
     "push a non existing file" in new S3ServerEmbedded {
-      val bucket = "test-bucket"
-      val s3 = new S3(bucket)
-
       val file = new File(s"whoops.txt")
 
       s3.push(file.getName, file) must throwAn[Exception](file.getName).await
     }
 
     "pull a non existing object" in new S3ServerEmbedded {
-      val bucket = "test-bucket"
-      val s3 = new S3(bucket)
-
       s3.pullResource("whoops.text") must throwAn[Exception]("NoSuchKey").await
     }
 

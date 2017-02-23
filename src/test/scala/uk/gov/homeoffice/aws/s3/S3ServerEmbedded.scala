@@ -1,7 +1,9 @@
 package uk.gov.homeoffice.aws.s3
 
 import java.net.URL
+import java.util.UUID
 import scala.language.postfixOps
+import scala.util.Try
 import com.amazonaws.auth.AnonymousAWSCredentials
 import org.specs2.execute.{AsResult, Result}
 import org.specs2.matcher.Scope
@@ -21,11 +23,21 @@ trait S3ServerEmbedded extends S3Server with Scope with ComposableAround with Lo
 
   implicit val s3Client = new S3Client(s3Host, new AnonymousAWSCredentials())
 
+  lazy val bucket = UUID.randomUUID().toString
+  lazy val s3 = new S3(bucket)
+
   override def around[R: AsResult](r: => R): Result = try {
     info(s"Started S3 $s3Host")
     super.around(r)
   } finally {
     info(s"Stopping S3 $s3Host")
+
+    Try { // Underlying API is a tad odd - checking if bucket exists can throw a wobbly
+      if (s3Client.doesBucketExist(bucket)) {
+        s3Client.deleteBucket(bucket)
+      }
+    }
+
     s3Server stop
   }
 }
