@@ -18,8 +18,8 @@ class S3Spec(implicit env: ExecutionEnv) extends Specification {
         case c: Push.Completed => c.key mustEqual file.getName
       }.await
 
-      s3.pullResource(file.getName) must beLike[Pull] {
-        case Pull(key, inputStream, contentType, numberOfBytes) =>
+      s3.pullResource(file.getName) must beLike[Resource] {
+        case Resource(key, inputStream, contentType, numberOfBytes) =>
           key mustEqual file.getName
           Source.fromInputStream(inputStream).mkString mustEqual "blah blah"
           contentType must startWith("text/plain")
@@ -43,16 +43,16 @@ class S3Spec(implicit env: ExecutionEnv) extends Specification {
       }.await
 
       // And pull them back
-      s3.pullResource(file1.getName) must beLike[Pull] {
-        case Pull(key, inputStream, contentType, numberOfBytes) =>
+      s3.pullResource(file1.getName) must beLike[Resource] {
+        case Resource(key, inputStream, contentType, numberOfBytes) =>
           key mustEqual file1.getName
           Source.fromInputStream(inputStream).mkString mustEqual "blah blah"
           contentType must startWith("text/plain")
           numberOfBytes mustEqual 9
       }.await
 
-      s3.pullResource(file2.getName) must beLike[Pull] {
-        case Pull(key, inputStream, contentType, numberOfBytes) =>
+      s3.pullResource(file2.getName) must beLike[Resource] {
+        case Resource(key, inputStream, contentType, numberOfBytes) =>
           key mustEqual file2.getName
           Source.fromInputStream(inputStream).mkString mustEqual "blah blah 2"
           contentType must startWith("text/plain")
@@ -79,8 +79,8 @@ class S3Spec(implicit env: ExecutionEnv) extends Specification {
       }.await
 
       // And pull them back
-      s3.pullResources("folder") must beLike[Seq[Pull]] {
-        case Seq(Pull(key1, inputStream1, contentType1, numberOfBytes1), Pull(key2, inputStream2, contentType2, numberOfBytes2)) =>
+      s3.pullResources("folder/") must beLike[Seq[Resource]] {
+        case Seq(Resource(key1, inputStream1, contentType1, numberOfBytes1), Resource(key2, inputStream2, contentType2, numberOfBytes2)) =>
           key1 mustEqual s"folder/${file1.getName}"
           Source.fromInputStream(inputStream1).mkString mustEqual "blah blah"
           contentType1 must startWith("text/plain")

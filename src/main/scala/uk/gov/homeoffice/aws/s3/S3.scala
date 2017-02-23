@@ -24,18 +24,35 @@ import grizzled.slf4j.Logging
 class S3(bucket: String)(implicit val s3Client: S3Client) extends Logging {
   val s3Bucket = s3Client.createBucket(bucket)
 
-  def pullResource(key: String)(implicit ec: ExecutionContext): Future[Pull] = Future {
+  /**
+    * Pull resource by a given key
+    * @param key String Uniquely identifying a resource within this bucket
+    * @param ec ExecutionContext Used to run this function in
+    * @return Future[Resource] if found, otherwise a failed Future
+    */
+  def pullResource(key: String)(implicit ec: ExecutionContext): Future[Resource] = Future {
     val s3Object = s3Client.getObject(bucket, key)
     val inputStream = s3Object.getObjectContent
     val contentType = s3Object.getObjectMetadata.getContentType
     val numberOfBytes = s3Object.getObjectMetadata.getContentLength
     info(s"""Pull for $key with $numberOfBytes Bytes of content type "$contentType" from bucket $bucket""")
 
-    Pull(key, inputStream, contentType, numberOfBytes)
+    Resource(key, inputStream, contentType, numberOfBytes)
   }
 
-  def pullResources(key: String)(implicit ec: ExecutionContext): Future[Seq[Pull]] = Future {
-    s3Client.listObjects(bucket, s"$key/").getObjectSummaries.sortBy(_.getLastModified).map(_.getKey)
+  /**
+    * Pull resource by a given key that acts as a prefix for all possible resources
+    * @param key String Uniquely idenifying resources where their keys are prefixed by this given key within this bucket
+    * @param ec ExecutionContext Used to run this function in
+    * @return Future[Seq[Resource] if found, otherwise a failed Future
+    * Example usage:
+    * <pre>
+    *   pullResources("myFolder/")
+    * </pre>
+    * NOTE the trailing backslash "/". S3 has no real concept of folders, but by using "/" a folder like grouping of resources can be achieved.
+    */
+  def pullResources(key: String)(implicit ec: ExecutionContext): Future[Seq[Resource]] = Future {
+    s3Client.listObjects(bucket, key).getObjectSummaries.sortBy(_.getLastModified).map(_.getKey)
   } flatMap { keys =>
     Future.sequence(keys map pullResource)
   }
