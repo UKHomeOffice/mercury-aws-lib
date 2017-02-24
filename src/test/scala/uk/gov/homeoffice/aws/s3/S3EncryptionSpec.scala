@@ -23,7 +23,9 @@ class S3EncryptionSpec(implicit env: ExecutionEnv) extends Specification {
   System.setProperty("trust_all_cert", "true")
 
   "S3" should {
-    "push an AES256 encrypted file and pull it back" in new S3ServerSSLEmbedded {
+    pending
+
+    /*"push an AES256 encrypted file and pull it back" in new S3ServerSSLEmbedded {
       val bucket = "test-bucket"
       val s3 = new S3(bucket)(s3Client)
 
@@ -39,7 +41,7 @@ class S3EncryptionSpec(implicit env: ExecutionEnv) extends Specification {
           contentType must startWith("text/plain")
           numberOfBytes mustEqual 9
       }.await
-    }
+    }*/
 
     /*"push a KMS encrypted file and pull it back" in new S3ServerEmbedded {
       val bucket = "test-bucket"
@@ -63,7 +65,7 @@ class S3EncryptionSpec(implicit env: ExecutionEnv) extends Specification {
 
 //////////////
 
-trait S3ServerSSLEmbedded extends S3Server with Scope with ComposableAround with Logging {
+/*trait S3ServerSSLEmbedded extends S3Server with Scope with ComposableAround with Logging {
   val s3Port = getFreeServerPort
   val s3Host = new URL(s"https://127.0.0.1:$s3Port")
 
@@ -195,4 +197,4 @@ class DummyTrustManager extends X509TrustManager {
   override def checkServerTrusted(arg0: Array[X509Certificate], arg1: String) = {
     println("checkServedTrusted "+arg0+" ... "+arg1)
   }
-}
+}*/
