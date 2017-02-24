@@ -1,4 +1,3 @@
-/*
 package uk.gov.homeoffice.aws.s3
 
 import java.io.{File, InputStream}
@@ -24,7 +23,9 @@ class S3EncryptionSpec(implicit env: ExecutionEnv) extends Specification {
   System.setProperty("trust_all_cert", "true")
 
   "S3" should {
-    "push an AES256 encrypted file and pull it back" in new S3ServerSSLEmbedded {
+    pending
+
+    /*"push an AES256 encrypted file and pull it back" in new S3ServerSSLEmbedded {
       val bucket = "test-bucket"
       val s3 = new S3(bucket)(s3Client)
 
@@ -34,15 +35,15 @@ class S3EncryptionSpec(implicit env: ExecutionEnv) extends Specification {
         case c: Push.Completed => c.key mustEqual file.getName
       }.await
 
-      s3.pull(file.getName) must beLike[Pull] {
-        case Pull(inputStream, contentType, numberOfBytes) =>
+      s3.pullResource(file.getName) must beLike[Resource] {
+        case Resource(key, inputStream, contentType, numberOfBytes) =>
           Source.fromInputStream(inputStream).mkString mustEqual "blah blah"
           contentType must startWith("text/plain")
           numberOfBytes mustEqual 9
       }.await
-    }
+    }*/
 
-    "push a KMS encrypted file and pull it back" in new S3ServerEmbedded {
+    /*"push a KMS encrypted file and pull it back" in new S3ServerEmbedded {
       val bucket = "test-bucket"
       val s3 = new S3(bucket)
 
@@ -52,19 +53,19 @@ class S3EncryptionSpec(implicit env: ExecutionEnv) extends Specification {
         case c: Push.Completed => c.key mustEqual file.getName
       }.await
 
-      s3.pull(file.getName) must beLike[Pull] {
-        case Pull(inputStream, contentType, numberOfBytes) =>
+      s3.pullResource(file.getName) must beLike[Resource] {
+        case Resource(key, inputStream, contentType, numberOfBytes) =>
           Source.fromInputStream(inputStream).mkString mustEqual "blah blah"
           contentType must startWith("text/plain")
           numberOfBytes mustEqual 9
       }.await
-    }
+    }*/
   }
 }
 
 //////////////
 
-trait S3ServerSSLEmbedded extends S3Server with Scope with ComposableAround with Logging {
+/*trait S3ServerSSLEmbedded extends S3Server with Scope with ComposableAround with Logging {
   val s3Port = getFreeServerPort
   val s3Host = new URL(s"https://127.0.0.1:$s3Port")
 

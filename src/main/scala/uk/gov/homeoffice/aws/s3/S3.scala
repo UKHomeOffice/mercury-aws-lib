@@ -12,6 +12,11 @@ import com.amazonaws.services.s3.transfer.TransferManagerBuilder
 import com.google.common.util.concurrent.AtomicDouble
 import grizzled.slf4j.Logging
 
+object S3 {
+  type ResourceKey = String
+  type ResourcesKey = String
+}
+
 /**
   * You may want to "set path style access on" for the S3Client you provide by doing the following:
   * <pre>
@@ -22,15 +27,17 @@ import grizzled.slf4j.Logging
   * @param s3Client S3Client to interact with the bucket on AWS S3
   */
 class S3(bucket: String)(implicit val s3Client: S3Client) extends Logging {
+  import S3._
+
   val s3Bucket = s3Client.createBucket(bucket)
 
   /**
     * Pull resource by a given key
-    * @param key String Uniquely identifying a resource within this bucket
+    * @param key ResourceKey (String) Uniquely identifying a resource within this bucket
     * @param ec ExecutionContext Used to run this function in
     * @return Future[Resource] if found, otherwise a failed Future
     */
-  def pullResource(key: String)(implicit ec: ExecutionContext): Future[Resource] = Future {
+  def pullResource(key: ResourceKey)(implicit ec: ExecutionContext): Future[Resource] = Future {
     val s3Object = s3Client.getObject(bucket, key)
     val inputStream = s3Object.getObjectContent
     val contentType = s3Object.getObjectMetadata.getContentType
@@ -42,7 +49,7 @@ class S3(bucket: String)(implicit val s3Client: S3Client) extends Logging {
 
   /**
     * Pull resource by a given key that acts as a prefix for all possible resources
-    * @param key String Uniquely idenifying resources where their keys are prefixed by this given key within this bucket
+    * @param key ResourcesKey (String) Uniquely idenifying resources where their keys are prefixed by this given key within this bucket
     * @param ec ExecutionContext Used to run this function in
     * @return Future[Seq[Resource] if found, otherwise a failed Future
     * Example usage:
@@ -51,13 +58,23 @@ class S3(bucket: String)(implicit val s3Client: S3Client) extends Logging {
     * </pre>
     * NOTE the trailing backslash "/". S3 has no real concept of folders, but by using "/" a folder like grouping of resources can be achieved.
     */
-  def pullResources(key: String)(implicit ec: ExecutionContext): Future[Seq[Resource]] = Future {
+  def pullResources(key: ResourcesKey)(implicit ec: ExecutionContext): Future[Seq[Resource]] = Future {
     s3Client.listObjects(bucket, key).getObjectSummaries.sortBy(_.getLastModified).map(_.getKey)
   } flatMap { keys =>
     Future.sequence(keys map pullResource)
   }
 
-  def push(key: String, file: File, encryption: Option[Encryption] = None)(implicit ec: ExecutionContext): Future[Push] = { // TODO add argument to provide Progress that can be called back
+  def pullResources(implicit ec: ExecutionContext): Future[Map[ResourcesKey, Seq[Resource]]] = Future {
+    s3Client.listObjects(bucket).getObjectSummaries.sortBy(_.getLastModified).map(_.getKey)
+  } flatMap { keys =>
+    Future.sequence(keys map pullResource) map { resources =>
+      resources groupBy { resource =>
+        resource.key.take(resource.key.lastIndexOf("/"))
+      }
+    }
+  }
+
+  def push(key: ResourceKey, file: File, encryption: Option[Encryption] = None)(implicit ec: ExecutionContext): Future[Push] = { // TODO add argument to provide Progress that can be called back
     val result = Promise[Push]()
 
     Try {
@@ -139,5 +156,5 @@ class S3(bucket: String)(implicit val s3Client: S3Client) extends Logging {
   }
 
   // TODO
-  // def publish(key: String, stream: InputStream)
+  // def publish(key: ResourceKey, stream: InputStream)
 }
