@@ -29,7 +29,7 @@ object S3 {
 class S3(bucket: String)(implicit val s3Client: S3Client) extends Logging {
   import S3._
 
-  val s3Bucket = s3Client.createBucket(bucket)
+  val s3Bucket = s3Client.listBuckets().find(_.getName == bucket) getOrElse s3Client.createBucket(bucket)
 
   /**
     * Pull resource by a given key
