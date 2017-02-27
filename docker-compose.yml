@@ -1,0 +1,22 @@
+version: "3"
+
+services:
+  s3:
+    image: olalond3/fakes3
+    ports:
+      - "4569:4569"
+
+  mercury:
+    build:
+      context: .
+
+    environment:
+      AWS_S3_URI: https://s3:4569
+
+    depends_on:
+      - s3
+
+    ports:
+      - 9100:9100
+
+    command: sbt run
