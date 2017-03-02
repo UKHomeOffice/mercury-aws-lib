@@ -8,6 +8,8 @@ fork in Test := true
 
 publishArtifact in Test := true
 
+releaseIgnoreUntrackedFiles := true
+
 scalacOptions ++= Seq(
   "-feature",
   "-language:implicitConversions",
