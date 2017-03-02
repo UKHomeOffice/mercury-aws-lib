@@ -4,7 +4,6 @@ import java.io.File
 import java.util.concurrent.atomic.AtomicLong
 import java.util.function.LongUnaryOperator
 import scala.collection.JavaConversions._
-import scala.concurrent.duration.Duration
 import scala.concurrent.{ExecutionContext, Future, Promise}
 import scala.util.Try
 import com.amazonaws.event.ProgressEventType._
@@ -47,6 +46,7 @@ class S3(bucket: String)(implicit val s3Client: S3Client) extends Logging {
     */
   def pullResource(key: ResourceKey)(implicit ec: ExecutionContext): Future[Resource] = Future {
     val s3Object = s3Client.getObject(bucket, key)
+
     val inputStream = s3Object.getObjectContent
     val contentType = s3Object.getObjectMetadata.getContentType
     val numberOfBytes = s3Object.getObjectMetadata.getContentLength
@@ -109,7 +109,7 @@ class S3(bucket: String)(implicit val s3Client: S3Client) extends Logging {
 
         override def progressChanged(progressEvent: ProgressEvent): Unit = progressEvent.getEventType match {
           case TRANSFER_STARTED_EVENT =>
-            debug(s"Push started for ${file.getName} (key = $key) to bucket $bucket")
+            info(s"Push started for ${file.getName} (key = $key) to bucket $bucket")
             start.set(System.currentTimeMillis)
 
           case c @ (TRANSFER_COMPLETED_EVENT | TRANSFER_PART_COMPLETED_EVENT) =>

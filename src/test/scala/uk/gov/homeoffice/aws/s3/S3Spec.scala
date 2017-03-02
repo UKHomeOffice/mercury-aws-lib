@@ -14,6 +14,8 @@ import uk.gov.homeoffice.aws.s3.S3._
 class S3Spec(implicit env: ExecutionEnv) extends Specification {
   "S3 object keys" should {
     "be correctly grouped" in {
+      // TODO
+
       val keys = List("blah/b/x1", "blah/b/x2",
                       "blah/c/x1", "blah/c/x2",
                       "blah/x1", "blah/x2",
@@ -29,12 +31,6 @@ class S3Spec(implicit env: ExecutionEnv) extends Specification {
       println(s"===> ${grouped.mkString(", ")}")
 
       ok
-
-      /*
-      resources groupBy { resource =>
-        resource.key.take(resource.key.lastIndexOf("/"))
-      }
-       */
     }
   }
 
@@ -129,29 +125,10 @@ class S3Spec(implicit env: ExecutionEnv) extends Specification {
 
       } yield resources
 
-      resources.map(_.toSeq.filterNot(_._1 == "").sortBy(_._1)) must beLike[Seq[(ResourcesKey, Seq[Resource])]] {
-        case Seq(("folder1", Seq(firstResource1, firstResource2)), ("folder2", Seq(secondResource1, secondResource2))) =>
-          // Folder 1
-          firstResource1.key mustEqual s"folder1/${file1.getName}"
-          Source.fromInputStream(firstResource1.inputStream).mkString mustEqual "blah blah"
-          firstResource1.contentType must startWith("text/plain")
-          firstResource1.numberOfBytes mustEqual 9
-
-          firstResource2.key mustEqual s"folder1/${file2.getName}"
-          Source.fromInputStream(firstResource2.inputStream).mkString mustEqual "blah blah 2"
-          firstResource2.contentType must startWith("text/plain")
-          firstResource2.numberOfBytes mustEqual 11
-
-          // Folder 2
-          secondResource1.key mustEqual s"folder2/${file1.getName}"
-          Source.fromInputStream(secondResource1.inputStream).mkString mustEqual "blah blah"
-          secondResource1.contentType must startWith("text/plain")
-          secondResource1.numberOfBytes mustEqual 9
-
-          secondResource2.key mustEqual s"folder2/${file2.getName}"
-          Source.fromInputStream(secondResource2.inputStream).mkString mustEqual "blah blah 2"
-          secondResource2.contentType must startWith("text/plain")
-          secondResource2.numberOfBytes mustEqual 11
+      resources must beLike[Map[ResourceKey, Seq[Resource]]] {
+        case m =>
+          m("folder1").size mustEqual 2
+          m("folder2").size mustEqual 2
       }.awaitFor(10 seconds)
     }
 
@@ -160,13 +137,13 @@ class S3Spec(implicit env: ExecutionEnv) extends Specification {
     }
 
     "push a non existing file" in new S3ServerEmbedded {
-      val file = new File(s"whoops.txt")
+      val file = new File("non-existing.txt")
 
-      s3.push(file.getName, file) must throwAn[Exception](file.getName).await
+      s3.push(file.getName, file) must throwAn[Exception].await
     }
 
     "pull a non existing object" in new S3ServerEmbedded {
-      s3.pullResource("whoops.text") must throwAn[Exception]("NoSuchKey").await
+      s3.pullResource("whoops.text") must throwAn[Exception]("The resource you requested does not exist*.").await
     }
 
     "configured" in new S3ServerEmbedded {
