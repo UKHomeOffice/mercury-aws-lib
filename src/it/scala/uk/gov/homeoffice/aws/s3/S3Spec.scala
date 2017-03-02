@@ -22,7 +22,6 @@ class S3Spec(implicit env: ExecutionEnv) extends Specification {
       val config = ConfigFactory.load("application.it.conf")
 
       val s3Host = new URL(config.getString("aws.s3.uri"))
-      println(s"===> $s3Host")
 
       val accessKey = config.getString("aws.s3.credentials.access-key")
       val secretKey = config.getString("aws.s3.credentials.secret-key")
@@ -49,7 +48,7 @@ class S3Spec(implicit env: ExecutionEnv) extends Specification {
       }.await
 
       s3.pullResource(file.getName) must beLike[Resource] {
-        case Resource(key, inputStream, contentType, numberOfBytes) =>
+        case Resource(key, inputStream, contentType, numberOfBytes, _) =>
           Source.fromInputStream(inputStream).mkString mustEqual "blah blah"
           contentType must startWith("text/plain")
           numberOfBytes mustEqual 9
