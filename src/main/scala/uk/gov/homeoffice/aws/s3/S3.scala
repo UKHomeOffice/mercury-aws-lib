@@ -134,7 +134,7 @@ class S3(bucket: String)(implicit val s3Client: S3Client) extends Logging {
 
             currentPercentTransferred updateAndGet new LongUnaryOperator {
               override def applyAsLong(current: Long) = if (newCurrentPercentTransferred >= current) {
-                debug(s"Push progress for ${file.getName}: ${newCurrentPercentTransferred.toInt} %")
+                info(s"Push progress for ${file.getName}: ${newCurrentPercentTransferred.toInt} %")
                 current + 10
               } else {
                 current
@@ -154,7 +154,7 @@ class S3(bucket: String)(implicit val s3Client: S3Client) extends Logging {
       push match {
         case p: Push.Failed => error(p.message)
         case p: Push.Cancelled => warn(p.message)
-        case p => debug(p.message)
+        case p => info(p.message)
       }
 
       push
