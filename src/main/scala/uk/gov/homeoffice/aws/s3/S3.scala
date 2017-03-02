@@ -2,14 +2,15 @@ package uk.gov.homeoffice.aws.s3
 
 import java.io.File
 import java.util.concurrent.atomic.AtomicLong
+import java.util.function.LongUnaryOperator
 import scala.collection.JavaConversions._
+import scala.concurrent.duration.Duration
 import scala.concurrent.{ExecutionContext, Future, Promise}
 import scala.util.Try
 import com.amazonaws.event.ProgressEventType._
 import com.amazonaws.event.{ProgressEvent, ProgressListener}
 import com.amazonaws.services.s3.model.PutObjectRequest
 import com.amazonaws.services.s3.transfer.TransferManagerBuilder
-import com.google.common.util.concurrent.AtomicDouble
 import grizzled.slf4j.Logging
 
 object S3 {
@@ -31,6 +32,13 @@ class S3(bucket: String)(implicit val s3Client: S3Client) extends Logging {
 
   val s3Bucket = s3Client.listBuckets().find(_.getName == bucket) getOrElse s3Client.createBucket(bucket)
 
+  val groupByTopDirectory: Seq[Resource] => Map[ResourcesKey, Seq[Resource]] = _.groupBy { resource =>
+    resource.key.indexOf("/") match {
+      case -1 => resource.key
+      case i => resource.key.take(i)
+    }
+  }
+
   /**
     * Pull resource by a given key
     * @param key ResourceKey (String) Uniquely identifying a resource within this bucket
@@ -42,16 +50,17 @@ class S3(bucket: String)(implicit val s3Client: S3Client) extends Logging {
     val inputStream = s3Object.getObjectContent
     val contentType = s3Object.getObjectMetadata.getContentType
     val numberOfBytes = s3Object.getObjectMetadata.getContentLength
+    val lastModifiedDate = s3Object.getObjectMetadata.getLastModified
     info(s"""Pull for $key with $numberOfBytes Bytes of content type "$contentType" from bucket $bucket""")
 
-    Resource(key, inputStream, contentType, numberOfBytes)
+    Resource(key, inputStream, contentType, numberOfBytes, lastModifiedDate)
   }
 
   /**
     * Pull resource by a given key that acts as a prefix for all possible resources
     * @param key ResourcesKey (String) Uniquely idenifying resources where their keys are prefixed by this given key within this bucket
     * @param ec ExecutionContext Used to run this function in
-    * @return Future[Seq[Resource] if found, otherwise a failed Future
+    * @return Future[Seq[Resource] The available resources for the given key
     * Example usage:
     * <pre>
     *   pullResources("myFolder/")
@@ -64,14 +73,15 @@ class S3(bucket: String)(implicit val s3Client: S3Client) extends Logging {
     Future.sequence(keys map pullResource)
   }
 
-  def pullResources(implicit ec: ExecutionContext): Future[Map[ResourcesKey, Seq[Resource]]] = Future {
+  /**
+    * @param group Seq[Resource] => Map[ResourcesKey, Seq[Resource]
+    * @param ec ExecutionContext Used to run this function in
+    * @return Future[Map[ResourcesKey, Seq[Resource] The available resources
+    */
+  def pullResources(group: Seq[Resource] => Map[ResourcesKey, Seq[Resource]] = groupByTopDirectory)(implicit ec: ExecutionContext): Future[Map[ResourcesKey, Seq[Resource]]] = Future {
     s3Client.listObjects(bucket).getObjectSummaries.sortBy(_.getLastModified).map(_.getKey)
   } flatMap { keys =>
-    Future.sequence(keys map pullResource) map { resources =>
-      resources groupBy { resource =>
-        resource.key.take(resource.key.lastIndexOf("/"))
-      }
-    }
+    Future.sequence(keys map pullResource) map group
   }
 
   def push(key: ResourceKey, file: File, encryption: Option[Encryption] = None)(implicit ec: ExecutionContext): Future[Push] = { // TODO add argument to provide Progress that can be called back
@@ -88,28 +98,18 @@ class S3(bucket: String)(implicit val s3Client: S3Client) extends Logging {
 
       val upload = transferManager.upload(putObjectRequest)
 
-      Future {
-        val exception = upload.waitForException()
-
-        if (exception != null) {
-          result tryFailure exception
-        }
-
-        transferManager.shutdownNow(false)
-      }
-
       val done: Push => Unit = { r =>
         result trySuccess r
-        transferManager.shutdownNow(false)
+        transferManager shutdownNow false
       }
 
       upload.addProgressListener(new ProgressListener {
-        val start = new AtomicLong(0L)
-        val currentPercentTransferred = new AtomicDouble(0.0)
+        val start = new AtomicLong(0)
+        val currentPercentTransferred = new AtomicLong(10)
 
         override def progressChanged(progressEvent: ProgressEvent): Unit = progressEvent.getEventType match {
           case TRANSFER_STARTED_EVENT =>
-            info(s"Push started for ${file.getName} to bucket $bucket")
+            debug(s"Push started for ${file.getName} (key = $key) to bucket $bucket")
             start.set(System.currentTimeMillis)
 
           case c @ (TRANSFER_COMPLETED_EVENT | TRANSFER_PART_COMPLETED_EVENT) =>
@@ -130,12 +130,18 @@ class S3(bucket: String)(implicit val s3Client: S3Client) extends Logging {
             done(failed)
 
           case _ =>
-            if (currentPercentTransferred.get() != upload.getProgress.getPercentTransferred) {
-              currentPercentTransferred.set(upload.getProgress.getPercentTransferred)
-              info(s"Push progress for ${file.getName}: $currentPercentTransferred %")
+            val newCurrentPercentTransferred = upload.getProgress.getPercentTransferred
+
+            currentPercentTransferred updateAndGet new LongUnaryOperator {
+              override def applyAsLong(current: Long) = if (newCurrentPercentTransferred >= current) {
+                debug(s"Push progress for ${file.getName}: ${newCurrentPercentTransferred.toInt} %")
+                current + 10
+              } else {
+                current
+              }
             }
 
-            if (upload.getProgress.getPercentTransferred == 100) {
+            if (newCurrentPercentTransferred >= 100) {
               progressChanged(new ProgressEvent(TRANSFER_COMPLETED_EVENT))
             }
         }
@@ -148,7 +154,7 @@ class S3(bucket: String)(implicit val s3Client: S3Client) extends Logging {
       push match {
         case p: Push.Failed => error(p.message)
         case p: Push.Cancelled => warn(p.message)
-        case p => info(p.message)
+        case p => debug(p.message)
       }
 
       push

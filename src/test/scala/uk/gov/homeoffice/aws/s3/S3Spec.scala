@@ -12,6 +12,32 @@ import org.specs2.mutable.Specification
 import uk.gov.homeoffice.aws.s3.S3._
 
 class S3Spec(implicit env: ExecutionEnv) extends Specification {
+  "S3 object keys" should {
+    "be correctly grouped" in {
+      val keys = List("blah/b/x1", "blah/b/x2",
+                      "blah/c/x1", "blah/c/x2",
+                      "blah/x1", "blah/x2",
+                      "x1", "x2",
+                      "scooby/b/x1", "scooby/b/x2",
+                      "scooby/c/x1", "scooby/c/x2",
+                      "scooby/x1", "scooby/x2")
+
+      val grouped = keys groupBy { key =>
+        key.take(key.indexOf("/"))
+      }
+
+      println(s"===> ${grouped.mkString(", ")}")
+
+      ok
+
+      /*
+      resources groupBy { resource =>
+        resource.key.take(resource.key.lastIndexOf("/"))
+      }
+       */
+    }
+  }
+
   "S3" should {
     "push a file and pull it back" in new S3ServerEmbedded {
       val file = new File(s"$s3Directory/test-file.txt")
@@ -21,7 +47,7 @@ class S3Spec(implicit env: ExecutionEnv) extends Specification {
       }.await
 
       s3.pullResource(file.getName) must beLike[Resource] {
-        case Resource(key, inputStream, contentType, numberOfBytes) =>
+        case Resource(key, inputStream, contentType, numberOfBytes, _) =>
           key mustEqual file.getName
           Source.fromInputStream(inputStream).mkString mustEqual "blah blah"
           contentType must startWith("text/plain")
@@ -71,7 +97,7 @@ class S3Spec(implicit env: ExecutionEnv) extends Specification {
       } yield resources
 
       resources must beLike[Seq[Resource]] {
-        case Seq(Resource(key1, inputStream1, contentType1, numberOfBytes1), Resource(key2, inputStream2, contentType2, numberOfBytes2)) =>
+        case Seq(Resource(key1, inputStream1, contentType1, numberOfBytes1, _), Resource(key2, inputStream2, contentType2, numberOfBytes2, _)) =>
           key1 mustEqual s"folder/${file1.getName}"
           Source.fromInputStream(inputStream1).mkString mustEqual "blah blah"
           contentType1 must startWith("text/plain")
@@ -99,7 +125,7 @@ class S3Spec(implicit env: ExecutionEnv) extends Specification {
         _ = TimeUnit.SECONDS.sleep(1) // To make sure timestamps are different for pushed resources, making assertions in this test deterministic.
         Push.Completed(_, _, _) <- s3.push(s"folder2/${file2.getName}", file2)
 
-        resources <- s3 pullResources
+        resources <- s3 pullResources()
 
       } yield resources
 
