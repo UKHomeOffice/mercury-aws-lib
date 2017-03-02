@@ -29,7 +29,7 @@ class S3Spec(implicit env: ExecutionEnv) extends Specification {
     var s3: S3 = _
 
     /**
-      * Duration Acquired resources must have been uploaded at least a "duration" amount of time in the past
+      * Duration acquired resources must have been uploaded at least a "duration" amount of time in the past
       */
     val oldEnough: (Date, Duration) => Boolean = { (date, olderThan) =>
       date before new Date(System.currentTimeMillis() - olderThan.toMillis)
