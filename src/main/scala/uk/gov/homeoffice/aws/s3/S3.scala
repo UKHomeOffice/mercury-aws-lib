@@ -109,7 +109,7 @@ class S3(bucket: String)(implicit val s3Client: S3Client) extends Logging {
 
         override def progressChanged(progressEvent: ProgressEvent): Unit = progressEvent.getEventType match {
           case TRANSFER_STARTED_EVENT =>
-            info(s"Push started for ${file.getName} (key = $key) to bucket $bucket") // TODO - Change to debug
+            debug(s"Push started for ${file.getName} (key = $key) to bucket $bucket")
             start.set(System.currentTimeMillis)
 
           case c @ (TRANSFER_COMPLETED_EVENT | TRANSFER_PART_COMPLETED_EVENT) =>
@@ -134,7 +134,7 @@ class S3(bucket: String)(implicit val s3Client: S3Client) extends Logging {
 
             currentPercentTransferred updateAndGet new LongUnaryOperator {
               override def applyAsLong(current: Long) = if (newCurrentPercentTransferred >= current) {
-                info(s"Push progress for ${file.getName}: ${newCurrentPercentTransferred.toInt} %") // TODO - Change to debug
+                debug(s"Push progress for ${file.getName}: ${newCurrentPercentTransferred.toInt} %")
                 current + 10
               } else {
                 current
@@ -154,7 +154,7 @@ class S3(bucket: String)(implicit val s3Client: S3Client) extends Logging {
       push match {
         case p: Push.Failed => error(p.message)
         case p: Push.Cancelled => warn(p.message)
-        case p => info(p.message) // TODO - Change to debug
+        case p => debug(p.message)
       }
 
       push
