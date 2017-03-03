@@ -23,6 +23,7 @@ object S3 {
   * s3Client.setS3ClientOptions(S3ClientOptions.builder().setPathStyleAccess(true).build())
   * </pre>
   * which configures the client to use path-style access for all requests.
+  * Note that the S3Client you provide may need its Region set if you plan to use encryption - the open source "mercury" on Github uses encryption.
   * @param bucket String The name of the bucket
   * @param s3Client S3Client to interact with the bucket on AWS S3
   */
