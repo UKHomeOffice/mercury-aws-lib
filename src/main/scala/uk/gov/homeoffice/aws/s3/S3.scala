@@ -30,8 +30,6 @@ object S3 {
 class S3(bucket: String)(implicit val s3Client: S3Client) extends Logging {
   import S3._
 
-  val s3Bucket = s3Client.listBuckets().find(_.getName == bucket) getOrElse s3Client.createBucket(bucket)
-
   val groupByTopDirectory: Seq[Resource] => Map[ResourcesKey, Seq[Resource]] = _.groupBy { resource =>
     resource.key.indexOf("/") match {
       case -1 => resource.key
