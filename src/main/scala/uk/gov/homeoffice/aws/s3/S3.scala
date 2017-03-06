@@ -27,7 +27,7 @@ object S3 {
   * @param bucket String The name of the bucket
   * @param s3Client S3Client to interact with the bucket on AWS S3
   */
-class S3(bucket: String)(implicit val s3Client: S3Client) extends Logging {
+class S3(val bucket: String)(implicit val s3Client: S3Client) extends Logging {
   import S3._
 
   val groupByTopDirectory: Seq[Resource] => Map[ResourcesKey, Seq[Resource]] = _.groupBy { resource =>
