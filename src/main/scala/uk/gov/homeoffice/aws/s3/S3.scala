@@ -30,6 +30,9 @@ object S3 {
 class S3(val bucket: String)(implicit val s3Client: S3Client) extends Logging {
   import S3._
 
+  /**
+    * Utility function to group/get all resources within a top level "folder"
+    */
   val groupByTopDirectory: Seq[Resource] => Map[ResourcesKey, Seq[Resource]] = _.groupBy { resource =>
     resource.key.indexOf("/") match {
       case -1 => resource.key
@@ -89,18 +92,18 @@ class S3(val bucket: String)(implicit val s3Client: S3Client) extends Logging {
     Try {
       val transferManager = TransferManagerBuilder.standard().withS3Client(s3Client).build()
 
+      val done: Push => Unit = { r =>
+        result trySuccess r
+        transferManager shutdownNow false
+      }
+
       val putObjectRequest = {
         val p = new PutObjectRequest(bucket, key, file)
 
         encryption map { _.encrypt(p) } getOrElse p
       }
 
-      val upload = transferManager.upload(putObjectRequest)
-
-      val done: Push => Unit = { r =>
-        result trySuccess r
-        transferManager shutdownNow false
-      }
+      val upload = transferManager upload putObjectRequest
 
       upload.addProgressListener(new ProgressListener {
         val start = new AtomicLong(0)
