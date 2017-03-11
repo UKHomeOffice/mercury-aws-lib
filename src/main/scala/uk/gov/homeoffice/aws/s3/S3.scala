@@ -34,7 +34,7 @@ class S3(val bucket: String)(implicit val s3Client: S3Client) extends Logging {
     s3Client.listBuckets().find(_.getName == bucket) getOrElse s3Client.createBucket(bucket)
   } catch {
     case t: Throwable =>
-      error(s"Error finding or creating bucket $bucket, which may be a permissioning issue", t)
+      warn(s"Error finding or creating bucket $bucket, which may be a permissioning issue", t)
   }
 
   /**
