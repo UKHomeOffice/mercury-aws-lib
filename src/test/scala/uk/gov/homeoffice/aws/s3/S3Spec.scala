@@ -146,6 +146,12 @@ class S3Spec(implicit env: ExecutionEnv) extends Specification {
       s3.pullResource("whoops.text") must throwAn[Exception]("The resource you requested does not exist*.").await
     }
 
+    "pull nothing" in new S3ServerEmbedded {
+      s3.pullResources() must beLike[Map[ResourcesKey, Seq[Resource]]] {
+        case xs => xs.isEmpty must beTrue
+      }.awaitFor(10 seconds)
+    }
+
     "configured" in new S3ServerEmbedded {
       override implicit val s3Client: S3Client = new S3Client(s3Host, new AnonymousAWSCredentials())(new ClientConfiguration().withRetryPolicy(PredefinedRetryPolicies.NO_RETRY_POLICY))
 
