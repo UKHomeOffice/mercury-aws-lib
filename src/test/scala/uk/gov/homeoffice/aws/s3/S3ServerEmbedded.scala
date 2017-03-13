@@ -21,7 +21,7 @@ trait S3ServerEmbedded extends S3Server with Scope with ComposableAround with Lo
   val s3Server = S3Mock(s3Port, s3Directory)
   s3Server start
 
-  implicit val s3Client = new S3Client(s3Host, new AnonymousAWSCredentials())
+  implicit lazy val s3Client = new S3Client(s3Host, new AnonymousAWSCredentials())
 
   lazy val bucket = UUID.randomUUID().toString
   lazy val s3 = new S3(bucket)

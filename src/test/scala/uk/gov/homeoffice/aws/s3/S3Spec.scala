@@ -2,6 +2,7 @@ package uk.gov.homeoffice.aws.s3
 
 import java.io.File
 import java.util.concurrent.TimeUnit
+import scala.collection.JavaConversions._
 import scala.concurrent.duration._
 import scala.io.Source
 import com.amazonaws.ClientConfiguration
@@ -12,6 +13,10 @@ import org.specs2.mutable.Specification
 import uk.gov.homeoffice.aws.s3.S3._
 
 class S3Spec(implicit env: ExecutionEnv) extends Specification {
+  trait Context extends S3ServerEmbedded {
+    s3Client.listBuckets().find(_.getName == bucket) getOrElse s3Client.createBucket(bucket)
+  }
+
   "S3 object keys" should {
     "be correctly grouped" in {
       // TODO
@@ -35,7 +40,7 @@ class S3Spec(implicit env: ExecutionEnv) extends Specification {
   }
 
   "S3" should {
-    "push a file and pull it back" in new S3ServerEmbedded {
+    "push a file and pull it back" in new Context {
       val file = new File(s"$s3Directory/test-file.txt")
 
       s3.push(file.getName, file) must beLike[Push] {
@@ -51,7 +56,7 @@ class S3Spec(implicit env: ExecutionEnv) extends Specification {
       }.await
     }
 
-    "push files to same bucket and pull them back" in new S3ServerEmbedded {
+    "push files to same bucket and pull them back" in new Context {
       val file1 = new File(s"$s3Directory/test-file.txt")
       val fileName1 = file1.getName
 
@@ -80,7 +85,7 @@ class S3Spec(implicit env: ExecutionEnv) extends Specification {
       }.awaitFor(10 seconds)
     }
 
-    "push files to folder in bucket and pull them back" in new S3ServerEmbedded {
+    "push files to folder in bucket and pull them back" in new Context {
       val file1 = new File(s"$s3Directory/test-file.txt")
 
       val file2 = new File(s"$s3Directory/test-file-2.txt")
@@ -106,7 +111,7 @@ class S3Spec(implicit env: ExecutionEnv) extends Specification {
       }.awaitFor(10 seconds)
     }
 
-    "push files to two separate folders in bucket and pull them back" in new S3ServerEmbedded {
+    "push files to two separate folders in bucket and pull them back" in new Context {
       val file1 = new File(s"$s3Directory/test-file.txt")
 
       val file2 = new File(s"$s3Directory/test-file-2.txt")
@@ -132,36 +137,36 @@ class S3Spec(implicit env: ExecutionEnv) extends Specification {
       }.awaitFor(10 seconds)
     }
 
-    "push an input stream" in new S3ServerEmbedded {
+    "push an input stream" in new Context {
       todo
     }
 
-    "push a non existing file" in new S3ServerEmbedded {
+    "push a non existing file" in new Context {
       val file = new File("non-existing.txt")
 
       s3.push(file.getName, file) must throwAn[Exception].await
     }
 
-    "pull a non existing object" in new S3ServerEmbedded {
+    "pull a non existing object" in new Context {
       s3.pullResource("whoops.text") must throwAn[Exception]("The resource you requested does not exist*.").await
     }
 
-    "pull nothing" in new S3ServerEmbedded {
+    "pull nothing" in new Context {
       s3.pullResources() must beLike[Map[ResourcesKey, Seq[Resource]]] {
         case xs => xs.isEmpty must beTrue
       }.awaitFor(10 seconds)
     }
 
-    "configured" in new S3ServerEmbedded {
-      override implicit val s3Client: S3Client = new S3Client(s3Host, new AnonymousAWSCredentials())(new ClientConfiguration().withRetryPolicy(PredefinedRetryPolicies.NO_RETRY_POLICY))
+    "configured" in new Context {
+      override implicit lazy val s3Client: S3Client = new S3Client(s3Host, new AnonymousAWSCredentials())(new ClientConfiguration().withRetryPolicy(PredefinedRetryPolicies.NO_RETRY_POLICY))
 
       s3Client.clientConfig.getRetryPolicy mustEqual PredefinedRetryPolicies.NO_RETRY_POLICY
     }
 
-    "configured implicitly" in new S3ServerEmbedded {
-      implicit val clientConfiguration = new ClientConfiguration().withRetryPolicy(PredefinedRetryPolicies.NO_RETRY_POLICY)
+    "configured implicitly" in new Context {
+      implicit lazy val clientConfiguration = new ClientConfiguration().withRetryPolicy(PredefinedRetryPolicies.NO_RETRY_POLICY)
 
-      override implicit val s3Client: S3Client = new S3Client(s3Host, new AnonymousAWSCredentials())
+      override implicit lazy val s3Client: S3Client = new S3Client(s3Host, new AnonymousAWSCredentials())
 
       s3Client.clientConfig.getRetryPolicy mustEqual PredefinedRetryPolicies.NO_RETRY_POLICY
     }

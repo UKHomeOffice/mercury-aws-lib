@@ -30,13 +30,6 @@ object S3 {
 class S3(val bucket: String)(implicit val s3Client: S3Client) extends Logging {
   import S3._
 
-  try {
-    s3Client.listBuckets().find(_.getName == bucket) getOrElse s3Client.createBucket(bucket)
-  } catch {
-    case t: Throwable =>
-      warn(s"Error finding or creating bucket $bucket, which may be a permissioning issue", t)
-  }
-
   /**
     * Utility function to group/get all resources within a top level "folder"
     */
