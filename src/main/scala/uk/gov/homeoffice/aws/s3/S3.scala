@@ -8,7 +8,7 @@ import scala.concurrent.{ExecutionContext, Future, Promise}
 import scala.util.Try
 import com.amazonaws.event.ProgressEventType._
 import com.amazonaws.event.{ProgressEvent, ProgressListener}
-import com.amazonaws.services.s3.model.{ListObjectsRequest, PutObjectRequest}
+import com.amazonaws.services.s3.model.PutObjectRequest
 import com.amazonaws.services.s3.transfer.TransferManagerBuilder
 import grizzled.slf4j.Logging
 
@@ -70,9 +70,7 @@ class S3(val bucket: String)(implicit val s3Client: S3Client) extends Logging {
     * NOTE the trailing backslash "/". S3 has no real concept of folders, but by using "/" a folder like grouping of resources can be achieved.
     */
   def pullResources(key: ResourcesKey)(implicit ec: ExecutionContext): Future[Seq[Resource]] = Future {
-    val listObjectsRequest = new ListObjectsRequest().withBucketName(bucket).withPrefix(key).withEncodingType("url")
-
-    s3Client.listObjects(listObjectsRequest).getObjectSummaries.sortBy(_.getLastModified).map(_.getKey)
+    s3Client.listObjects(bucket, key).getObjectSummaries.sortBy(_.getLastModified).map(_.getKey)
   } flatMap { keys =>
     Future.sequence(keys map pullResource)
   }
@@ -83,15 +81,13 @@ class S3(val bucket: String)(implicit val s3Client: S3Client) extends Logging {
     * @return Future[Map[ResourcesKey, Seq[Resource] The available resources
     */
   def pullResources(group: Seq[Resource] => Map[ResourcesKey, Seq[Resource]] = groupByTopDirectory)(implicit ec: ExecutionContext): Future[Map[ResourcesKey, Seq[Resource]]] = Future {
-    val listObjectsRequest = new ListObjectsRequest().withBucketName(bucket).withEncodingType("url")
-
-    s3Client.listObjects(listObjectsRequest).getObjectSummaries.sortBy(_.getLastModified).map(_.getKey)
+    s3Client.listObjects(bucket).getObjectSummaries.sortBy(_.getLastModified).map(_.getKey)
   } flatMap { keys =>
     Future.sequence(keys map pullResource) map group
   }
 
   def push(key: ResourceKey, file: File, encryption: Option[Encryption] = None)(implicit ec: ExecutionContext): Future[Push] = { // TODO add argument to provide Progress that can be called back
-    val result = Promise[Push]()
+  val result = Promise[Push]()
 
     Try {
       val transferManager = TransferManagerBuilder.standard().withS3Client(s3Client).build()
