@@ -30,7 +30,7 @@ class S3Spec(implicit env: ExecutionEnv) extends Specification with HasConfig {
       val secretKey = config.getString("aws.s3.credentials.secret-key")
 
       implicit val clientConfiguration = new ClientConfiguration().withRetryPolicy(PredefinedRetryPolicies.NO_RETRY_POLICY)
-      implicit val s3Client = new S3Client(s3Host, new BasicAWSCredentials(accessKey, secretKey))
+      implicit val s3Client = new S3PlainClient(s3Host, new BasicAWSCredentials(accessKey, secretKey))
       s3Client.setS3ClientOptions(S3ClientOptions.builder().setPathStyleAccess(true).build())
 
       new uk.gov.homeoffice.aws.s3.S3(UUID.randomUUID().toString)
@@ -40,7 +40,7 @@ class S3Spec(implicit env: ExecutionEnv) extends Specification with HasConfig {
       super.around(r)
     } finally {
       // Need to close everything down (gracefully) if running in sbt interactive mode, we don't want anything hanging around.
-      s3.s3Client.shutdown()
+      s3.s3Client.asInstanceOf[S3PlainClient].shutdown()
     }
   }
 

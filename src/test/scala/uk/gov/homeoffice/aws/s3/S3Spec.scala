@@ -158,7 +158,7 @@ class S3Spec(implicit env: ExecutionEnv) extends Specification {
     }
 
     "configured" in new Context {
-      override implicit lazy val s3Client: S3Client = new S3Client(s3Host, new AnonymousAWSCredentials())(new ClientConfiguration().withRetryPolicy(PredefinedRetryPolicies.NO_RETRY_POLICY))
+      override implicit lazy val s3Client: S3PlainClient = new S3PlainClient(s3Host, new AnonymousAWSCredentials())(new ClientConfiguration().withRetryPolicy(PredefinedRetryPolicies.NO_RETRY_POLICY))
 
       s3Client.clientConfig.getRetryPolicy mustEqual PredefinedRetryPolicies.NO_RETRY_POLICY
     }
@@ -166,7 +166,7 @@ class S3Spec(implicit env: ExecutionEnv) extends Specification {
     "configured implicitly" in new Context {
       implicit lazy val clientConfiguration = new ClientConfiguration().withRetryPolicy(PredefinedRetryPolicies.NO_RETRY_POLICY)
 
-      override implicit lazy val s3Client: S3Client = new S3Client(s3Host, new AnonymousAWSCredentials())
+      override implicit lazy val s3Client: S3PlainClient = new S3PlainClient(s3Host, new AnonymousAWSCredentials())
 
       s3Client.clientConfig.getRetryPolicy mustEqual PredefinedRetryPolicies.NO_RETRY_POLICY
     }
