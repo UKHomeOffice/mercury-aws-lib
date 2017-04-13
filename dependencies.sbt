@@ -19,6 +19,7 @@ val `elasticmq-version` = "0.13.1"
 val `akka-scala-lib-version` = "2.1.17"
 val `io-scala-lib-version` = "1.9.12"
 val `test-scala-lib-version` = "1.4.4"
+val `bouncy-castle-version` = "1.55"
 
 libraryDependencies ++= Seq(
   "com.amazonaws" % "aws-java-sdk" % `aws-java-version`,
@@ -29,7 +30,8 @@ libraryDependencies ++= Seq(
   "org.elasticmq" %% "elasticmq-rest-sqs" % `elasticmq-version`,
   "com.github.UKHomeOffice" %% "akka-scala-lib" % `akka-scala-lib-version`,
   "com.github.UKHomeOffice" %% "io-scala-lib" % `io-scala-lib-version`,
-  "com.github.UKHomeOffice" %% "test-scala-lib" % `test-scala-lib-version`
+  "com.github.UKHomeOffice" %% "test-scala-lib" % `test-scala-lib-version`,
+  "org.bouncycastle" % "bcprov-ext-jdk15on" % `bouncy-castle-version`
 )
 
 libraryDependencies ++= Seq(
