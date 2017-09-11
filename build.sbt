@@ -1,4 +1,4 @@
-name := "aws-scala-lib"
+name := "mercury-aws-lib"
 
 scalaVersion := "2.11.8"
 
